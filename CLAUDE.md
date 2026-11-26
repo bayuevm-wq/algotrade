@@ -19,6 +19,12 @@ jelaskan perubahan dengan bahasa Indonesia yang sederhana.
 - `src/algotrade/metrics.py`    — Sharpe, CAGR, drawdown, dll.
 - `config/default.yaml`         — ticker, parameter, biaya
 
+## Referensi (baca saja, jangan diubah)
+- `..\referensi\machine-learning-for-trading` — buku *Machine Learning for Trading* (ML4T)
+  edisi 3, lisensi MIT. Acuan metodologi: walk-forward, biaya transaksi (bab 18),
+  risiko (bab 19), live trading (bab 25).
+- `..\referensi\awesome-quant` — daftar library & sumber data quant.
+
 ## Aturan WAJIB (jangan dilanggar)
 1. **Tidak boleh look-ahead.** Sinyal di bar t hanya memakai data ≤ t. Dilarang `shift(-n)`,
    `center=True` pada rolling, atau normalisasi memakai statistik seluruh dataset.
