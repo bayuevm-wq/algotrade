@@ -11,7 +11,8 @@ jelaskan perubahan dengan bahasa Indonesia yang sederhana.
   urutan kerja) dan **tunggu persetujuan**.
 - Satu fase selesai = kriteria "Selesai jika" terpenuhi + tes lulus + hasil dilaporkan +
   commit + push + checklist di `ROADMAP.md` diperbarui. Baru lanjut.
-- Status sekarang: Fase 0 selesai. Kode masih satu sumber data (yfinance) dan satu aset.
+- Status sekarang: Fase 0 dan 1 selesai. Backtest masih satu aset dan membaca cache CSV lama;
+  data multi-pasar baru dipakai mulai Fase 2.
 
 ## Perintah
 - Install: `uv sync --extra dev` (atau `pip install -e ".[dev]"`)
@@ -21,15 +22,21 @@ jelaskan perubahan dengan bahasa Indonesia yang sederhana.
 - Walk-forward: `uv run python -m algotrade.cli walkforward`
 - Banding banyak ticker: `uv run python -m algotrade.cli compare [--tickers A B] [--strategy Y]`
 - Offline: tambahkan `--synthetic`
+- Data multi-pasar: `uv run algotrade data update [--market M] [--full]`, `... data quality`
 
 ## Struktur
-- `src/algotrade/data.py`       — ambil data (yfinance) + cache CSV di `data/`
+- `src/algotrade/instruments.py` — model `Instrument` + pembaca `config/instruments.yaml`
+- `src/algotrade/data/`         — adapter (`cex`, `equity`, `dex`, `archive`), `store`
+  (Parquet + DuckDB), `resample`, `quality`, `update`; `yahoo.py` = cache CSV lama
+- `src/algotrade/data_cli.py`   — perintah `data update` / `data quality`
 - `src/algotrade/strategies/`   — satu file per strategi, daftar di `strategies/__init__.py`
 - `src/algotrade/backtest.py`   — backtester vektor (shift 1 bar + biaya)
 - `src/algotrade/compare.py`    — tabel strategi vs Buy & Hold untuk banyak ticker
 - `src/algotrade/walkforward.py`— optimasi parameter train/test bergulir
 - `src/algotrade/metrics.py`    — Sharpe, CAGR, drawdown, dll.
-- `config/default.yaml`         — ticker, parameter, biaya
+- `config/default.yaml`         — ticker, parameter, biaya (backtest)
+- `config/instruments.yaml`     — pasar, exchange, simbol, timeframe (data)
+- `docs/data.md`                — sumber data, batasannya, dan penjadwalan
 
 ## Referensi (baca saja, jangan diubah, jangan menyalin kode mentah)
 - `..\referensi\machine-learning-for-trading` — buku *Machine Learning for Trading* (ML4T)

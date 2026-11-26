@@ -151,7 +151,7 @@ Gunakan ..\referensi sebagai acuan metodologi, jangan menyalin kode mentah.
 ## Checklist progres
 
 - [x] Fase 0 — Template awal (backtest satu ticker, walk-forward, tes look-ahead, compare)
-- [ ] Fase 1 — Arsitektur multi-pasar & data
+- [x] Fase 1 — Arsitektur multi-pasar & data
 - [ ] Fase 2 — Backtest multi-aset realistis
 - [ ] Fase 3 — Lab riset anti-overfitting
 - [ ] Fase 4 — Strategi & portofolio

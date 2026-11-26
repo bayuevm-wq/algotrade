@@ -4,11 +4,15 @@ version = "0.1.0"
 description = "Template awal riset & backtest algoritma trading"
 requires-python = ">=3.10"
 dependencies = [
-    "pandas>=2.0",
+    "pandas>=2.0,<4",
     "numpy>=1.24",
     "yfinance>=0.2.40",
     "pyyaml>=6.0",
     "matplotlib>=3.7",
+    "ccxt>=4.4",
+    "duckdb>=1.1",
+    "pyarrow>=16",
+    "exchange-calendars>=4.5",
 ]
 
 [project.optional-dependencies]

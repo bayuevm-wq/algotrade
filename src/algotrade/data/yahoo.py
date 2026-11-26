@@ -11,7 +11,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-CACHE_DIR = Path(__file__).resolve().parents[2] / "data"
+CACHE_DIR = Path(__file__).resolve().parents[3] / "data"
 REQUIRED = ["open", "high", "low", "close", "volume"]
 
 

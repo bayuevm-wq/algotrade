@@ -1,0 +1,89 @@
+# ===== Data multi-pasar (dipakai perintah `algotrade data ...`) =====
+# Exchange, daftar simbol, pool, dan timeframe diubah di sini, tidak di kode.
+# Semua angka biaya hanyalah CONTOH (belum dipakai backtest sampai Fase 2) - cek tarif asli.
+
+storage:
+  root: data/market            # file Parquet
+  database: data/market.duckdb # view DuckDB di atas file Parquet
+
+markets:
+  cex:
+    session: 24/7              # buka terus
+    periods_per_year: 365      # jumlah bar harian per tahun
+    quote: USDT
+    costs: {maker_fee_pct: 0.08, taker_fee_pct: 0.10, slippage_pct: 0.05}
+    perp_costs: {maker_fee_pct: 0.02, taker_fee_pct: 0.05, slippage_pct: 0.05}
+    quality: {max_stale_hours: 6, outlier_return: 0.15, funding_extreme: 0.005}
+  us_equity:
+    session: XNYS              # kalender bursa NYSE
+    periods_per_year: 252
+    quote: USD
+    tick_size: 0.01
+    lot_size: 1
+    costs: {commission_pct: 0.0, spread_pct: 0.02, slippage_pct: 0.02}
+    quality: {max_stale_sessions: 1, outlier_return: 0.20}
+  dex:
+    session: 24/7
+    periods_per_year: 365
+    quote: USD
+    costs: {slippage_pct: 0.10, mev_buffer_pct: 0.20}   # swap fee & gas diisi per pool
+    quality: {max_stale_hours: 6, outlier_return: 0.15, min_liquidity_usd: 1000000}
+  idx:
+    session: XIDX              # kalender Bursa Efek Indonesia
+    periods_per_year: 242
+    quote: IDR
+    tick_size: null            # IDX: tergantung harga
+    lot_size: 100
+    costs: {buy_fee_pct: 0.15, sell_fee_pct: 0.25, slippage_pct: 0.05}
+    quality: {max_stale_sessions: 1, outlier_return: 0.25}
+
+sources:
+  cex:
+    enabled: true
+    exchange: okx              # nama exchange di ccxt
+    page_limit: 300            # bar per permintaan (sesuaikan bila ganti exchange)
+    symbols: [BTC/USDT, ETH/USDT, "BTC/USDT:USDT", "ETH/USDT:USDT"]  # ":USDT" = perpetual
+    timeframes: [1h]           # diunduh dari exchange
+    derived: [4h, 1d]          # dibuat dari timeframe pertama
+    start: "2019-01-01"
+    funding:
+      enabled: true            # funding dari exchange di atas (OKX: hanya +-3 bulan)
+      archive:                 # riwayat panjang dari arsip publik Binance, disimpan terpisah
+        enabled: true
+        name: binance_archive
+        start: "2020-01-01"
+        symbols:               # simbol perpetual di atas -> nama di arsip
+          "BTC/USDT:USDT": BTCUSDT
+          "ETH/USDT:USDT": ETHUSDT
+
+  us_equity:
+    enabled: true
+    provider: yfinance
+    # Saham besar HARI INI: mengandung survivorship bias (yang gagal tidak ikut).
+    symbols: [SPY, AAPL, MSFT, NVDA, AMZN, GOOGL, META, TSLA, AVGO, BRK-B, JPM,
+              V, UNH, XOM, LLY, JNJ, WMT, MA, PG, HD, COST]
+    timeframes: [1d]
+    start: "2015-01-01"
+
+  dex:
+    enabled: true
+    provider: geckoterminal
+    history_days: 180          # batas API gratis
+    request_interval_sec: 7    # jeda antar permintaan agar tidak kena rate limit
+    timeframes: [1h]
+    derived: [4h, 1d]
+    # Pilih pool berdasarkan likuiditas DAN volume; likuiditas besar bervolume kecil mencurigakan.
+    pools:
+      - {name: WETH-USDC-eth, network: eth, fee_pct: 0.05, gas_usd: 5.0,
+         address: "0x88e6a0c2ddd26feeb64f039a2c41296fcb3f5640"}
+      - {name: SOL-USDC-solana, network: solana, fee_pct: null, gas_usd: 0.01,   # fee belum dicek
+         address: "Czfq3xZZDmsdGdUyrNLtRhGc47cXcZtLG4crryfu44zE"}
+      - {name: WETH-USDC-base, network: base, fee_pct: 0.3, gas_usd: 0.05,
+         address: "0x6c561b446416e1a00e8e93e221854d6ea4171372"}
+
+  idx:
+    enabled: false             # opsional; ubah ke true bila perlu
+    provider: yfinance
+    symbols: [BBCA.JK, BBRI.JK, TLKM.JK, ASII.JK, "^JKSE"]
+    timeframes: [1d]
+    start: "2015-01-01"

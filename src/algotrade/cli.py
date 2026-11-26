@@ -18,6 +18,7 @@ import yaml
 from .backtest import BacktestConfig, run_backtest
 from .compare import compare_tickers, format_table, save_csv
 from .data import load_prices, synthetic_prices
+from .data_cli import add_data_parser
 from .metrics import format_metrics
 from .report import plot_result
 from .strategies import get_strategy
@@ -124,6 +125,7 @@ def main():
     s.add_argument("--synthetic", action="store_true", help="pakai data palsu (offline)")
     s.add_argument("--output", default=str(ROOT / "reports" / "compare.csv"))
     s.set_defaults(func=cmd_compare)
+    add_data_parser(sub)
     args = p.parse_args()
     args.func(args)
 

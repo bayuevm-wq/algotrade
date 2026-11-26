@@ -17,7 +17,7 @@ Rencana lengkap ada di [`ROADMAP.md`](ROADMAP.md).
 | Fase | Isi | Status |
 |---|---|---|
 | 0 | Backtest satu aset, walk-forward, tes look-ahead, compare | ✅ selesai |
-| 1 | Arsitektur multi-pasar & data | belum |
+| 1 | Arsitektur multi-pasar & data | ✅ selesai |
 | 2 | Backtest multi-aset dengan biaya per pasar | belum |
 | 3 | Lab riset anti-overfitting | belum |
 | 4 | Strategi & portofolio | belum |
@@ -25,9 +25,13 @@ Rencana lengkap ada di [`ROADMAP.md`](ROADMAP.md).
 | 6 | Paper trading / testnet (minimal 3 bulan) | belum |
 | 7 | Live modal kecil (opsional) | belum |
 
-**Yang bisa dipakai sekarang:** data harian dari Yahoo Finance, dua strategi (`sma_cross`,
-`rsi_meanrev`), dan satu model biaya persentase. Config bawaan masih memakai saham IDX.
-Adapter ccxt dan DEX belum ada.
+**Yang bisa dipakai sekarang:**
+
+- Data crypto (OKX), saham US, dan DEX tersimpan di Parquet + DuckDB, dengan laporan kualitas.
+  Lihat [`docs/data.md`](docs/data.md), termasuk cara update otomatis harian di Windows.
+- Backtest satu aset dengan dua strategi (`sma_cross`, `rsi_meanrev`) dan satu model biaya
+  persentase. Bagian ini **masih** memakai data harian yfinance dan config bawaan saham IDX;
+  disambungkan ke data multi-pasar di Fase 2.
 
 ## 1. Persiapan (sekali saja)
 
@@ -65,6 +69,15 @@ Grafik tersimpan di `reports/`. Atur ticker, parameter, dan biaya di `config/def
 Biaya dan `periods_per_year` bawaan disetel untuk saham IDX, jadi sesuaikan dulu sebelum
 membaca hasil pasar lain.
 
+### Data multi-pasar
+
+```bash
+uv run algotrade data update      # unduh & cek semua pasar (pertama kali sekitar 10 menit)
+uv run algotrade data quality     # laporan kualitas saja
+```
+
+Exchange, simbol, dan timeframe diatur di `config/instruments.yaml`.
+
 ## 3. Cara membaca hasil
 
 | Metrik | Arti | Patokan kasar (harian) |
@@ -101,14 +114,18 @@ sudah digantikan.
 ## Struktur
 
 ```
-config/default.yaml        konfigurasi
+config/default.yaml        konfigurasi backtest
+config/instruments.yaml    pasar, exchange, simbol, timeframe
 src/algotrade/
-  data.py                  data + cache
+  instruments.py           model Instrument
+  data/                    adapter, penyimpanan, resampling, kualitas, update
   strategies/              strategi (tambah di sini)
   backtest.py              mesin backtest + biaya
   compare.py               banyak ticker vs Buy & Hold
   walkforward.py           optimasi out-of-sample
   metrics.py, report.py    metrik & grafik
-  cli.py                   perintah terminal
+  cli.py, data_cli.py      perintah terminal
+scripts/data_update.ps1    update data terjadwal (Windows)
+docs/data.md               panduan data
 tests/                     tes (termasuk deteksi look-ahead)
 ```
