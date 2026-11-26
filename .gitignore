@@ -5,6 +5,7 @@ __pycache__/
 data/*.csv
 data/*.parquet
 reports/*.png
+reports/*.csv
 .pytest_cache/
 .ruff_cache/
 *.egg-info/

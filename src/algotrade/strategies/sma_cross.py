@@ -13,6 +13,10 @@ class SmaCross(Strategy):
             raise ValueError("fast harus lebih kecil dari slow")
         super().__init__(fast=fast, slow=slow)
 
+    @property
+    def warmup(self) -> int:
+        return self.params["slow"] - 1
+
     def generate_signals(self, df: pd.DataFrame) -> pd.Series:
         fast = df["close"].rolling(self.params["fast"]).mean()
         slow = df["close"].rolling(self.params["slow"]).mean()

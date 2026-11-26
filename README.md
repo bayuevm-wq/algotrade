@@ -35,6 +35,8 @@ uv run python -m algotrade.cli backtest                   # BBCA.JK (lihat confi
 uv run python -m algotrade.cli backtest --ticker BTC-USD
 uv run python -m algotrade.cli backtest --ticker TLKM.JK --strategy rsi_meanrev
 uv run python -m algotrade.cli walkforward                # hasil out-of-sample
+uv run python -m algotrade.cli compare                    # banyak ticker -> reports/compare.csv
+uv run python -m algotrade.cli compare --tickers BBCA.JK "^JKSE" --strategy rsi_meanrev
 ```
 
 Grafik tersimpan di `reports/`. Atur ticker, parameter, dan biaya di `config/default.yaml`.
@@ -48,6 +50,10 @@ Grafik tersimpan di `reports/`. Atur ticker, parameter, dan biaya di `config/def
 | cagr | pertumbuhan tahunan | bandingkan dengan Buy & Hold |
 | exposure | % waktu memegang posisi | |
 | n_trades | jumlah perubahan posisi | makin banyak, makin besar biaya |
+
+Buy & Hold juga membayar biaya beli dan baru mulai setelah masa pemanasan indikator, jadi
+strategi dan pembandingnya dinilai pada tanggal yang sama. Strategi baru yang memakai
+indikator perlu mengisi properti `warmup`.
 
 Yang dipercaya adalah angka **walk-forward out-of-sample**, bukan backtest biasa.
 

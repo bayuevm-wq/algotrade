@@ -39,7 +39,7 @@ def compute_metrics(returns: pd.Series, positions: pd.Series | None = None,
     if positions is not None:
         pos = positions.fillna(0)
         out["exposure"] = float((pos != 0).mean())
-        out["n_trades"] = int((pos.diff().abs() > 0).sum())
+        out["n_trades"] = int((pos.diff().fillna(pos) != 0).sum())
         active = r[pos != 0]
         out["win_rate_bars"] = float((active > 0).mean()) if len(active) else np.nan
     return out

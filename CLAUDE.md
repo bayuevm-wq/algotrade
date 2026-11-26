@@ -9,12 +9,14 @@ jelaskan perubahan dengan bahasa Indonesia yang sederhana.
 - Lint: `uv run ruff check . --fix`
 - Backtest: `uv run python -m algotrade.cli backtest [--ticker X] [--strategy Y]`
 - Walk-forward: `uv run python -m algotrade.cli walkforward`
+- Banding banyak ticker: `uv run python -m algotrade.cli compare [--tickers A B] [--strategy Y]`
 - Offline: tambahkan `--synthetic`
 
 ## Struktur
 - `src/algotrade/data.py`       — ambil data (yfinance) + cache CSV di `data/`
 - `src/algotrade/strategies/`   — satu file per strategi, daftar di `strategies/__init__.py`
 - `src/algotrade/backtest.py`   — backtester vektor (shift 1 bar + biaya)
+- `src/algotrade/compare.py`    — tabel strategi vs Buy & Hold untuk banyak ticker
 - `src/algotrade/walkforward.py`— optimasi parameter train/test bergulir
 - `src/algotrade/metrics.py`    — Sharpe, CAGR, drawdown, dll.
 - `config/default.yaml`         — ticker, parameter, biaya

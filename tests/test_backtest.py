@@ -82,3 +82,24 @@ def test_no_short_when_disabled(df):
 
     res = run_backtest(df, Short(), BacktestConfig(allow_short=False))
     assert (res.data["position"] >= 0).all()
+
+
+def test_benchmark_starts_with_strategy_and_pays_cost(df):
+    res = run_backtest(df, get_strategy("sma_cross", fast=5, slow=20), BacktestConfig())
+    start = res.extra["eval_start"]
+    assert start == df.index[20]  # sinyal pertama di bar 19, posisi mulai bar 20
+    assert (res.data.loc[res.data.index < start, "bench_ret"] == 0).all()
+    assert np.isclose(res.data.loc[start, "bench_ret"], res.data.loc[start, "asset_ret"] - 0.002)
+    assert res.benchmark_metrics["n_trades"] == 1
+
+
+@pytest.mark.parametrize("name", list(STRATEGIES))
+def test_no_position_during_warmup(df, name):
+    strat = get_strategy(name)
+    res = run_backtest(df, strat, BacktestConfig())
+    assert (res.data["position"].iloc[: strat.warmup + 1] == 0).all()
+
+
+def test_too_short_data_rejected(df):
+    with pytest.raises(ValueError):
+        run_backtest(df.iloc[:50], get_strategy("sma_cross"), BacktestConfig())

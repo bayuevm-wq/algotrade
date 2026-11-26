@@ -13,9 +13,9 @@ from .backtest import BacktestResult
 
 
 def plot_result(res: BacktestResult, path: str | Path, title: str = "") -> Path:
-    d = res.data
+    d = res.data.loc[res.extra["eval_start"]:]
     strat = (1 + d["strat_ret"]).cumprod()
-    bench = (1 + d["asset_ret"]).cumprod()
+    bench = (1 + d["bench_ret"]).cumprod()
     dd = strat / strat.cummax() - 1
 
     fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(11, 7), sharex=True,

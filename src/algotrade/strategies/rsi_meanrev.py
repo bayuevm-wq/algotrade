@@ -20,6 +20,10 @@ class RsiMeanRev(Strategy):
     def __init__(self, period: int = 14, entry: float = 30, exit: float = 55):
         super().__init__(period=period, entry=entry, exit=exit)
 
+    @property
+    def warmup(self) -> int:
+        return self.params["period"]
+
     def generate_signals(self, df: pd.DataFrame) -> pd.Series:
         r = rsi(df["close"], self.params["period"])
         pos = np.zeros(len(df))

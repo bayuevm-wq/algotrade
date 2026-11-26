@@ -4,6 +4,8 @@
 #   Crypto    : BTC-USD, ETH-USD
 #   Forex     : EURUSD=X, USDIDR=X
 ticker: BBCA.JK
+# Daftar untuk perintah `compare` (dipakai bila --tickers tidak diisi)
+tickers: [BBCA.JK, BBRI.JK, TLKM.JK, ASII.JK, "^JKSE"]
 start: "2015-01-01"
 end: null            # null = sampai hari ini
 interval: 1d
