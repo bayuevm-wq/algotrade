@@ -55,7 +55,7 @@ def test_default_config_covers_phase_one(config):
     assert {"BTC/USDT", "ETH/USDT"} <= {i.symbol for i in by_market["cex"]}
     assert len(by_market["us_equity"]) == 21
     assert len(by_market["dex"]) == 3
-    assert by_market["idx"] == []                   # dimatikan di config
+    assert "BBCA.JK" in {i.symbol for i in by_market["idx"]}
     perp = pick(config, "BTC/USDT:USDT")
     assert perp.kind == "perp" and perp.quote == "USDT"
     assert perp.bars_per_year("1h") == 365 * 24

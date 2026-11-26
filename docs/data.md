@@ -82,8 +82,9 @@ Selisih harga per jam pool ETH terhadap OKX: median 0,08%, persentil 99 sekitar 
 
 - Daftar saham dipilih dari perusahaan besar hari ini (**survivorship bias**).
 - Angka biaya di config adalah contoh; swap fee pool Solana belum diisi. Fase 2 yang memakainya.
-- Perintah `backtest`, `walkforward`, dan `compare` masih memakai cache CSV lama (yfinance),
-  belum membaca data Parquet ini. Cache `*_latest.csv` tidak diperbarui otomatis.
+- `backtest`, `walkforward`, dan `compare` membaca data Parquet ini; dataset GAGAL ditolak.
+- BBRI.JK dan TLKM.JK saat ini GAGAL: pada 20 Apr 2016 Yahoo memberi harga buka di luar
+  rentang high-low.
 
 ## Update otomatis harian (Windows Task Scheduler)
 
@@ -100,8 +101,8 @@ Pasang tugas harian pukul 07:30 (waktu komputer):
 
 ```powershell
 $script   = (Resolve-Path .\scripts\data_update.ps1).Path
-$action   = New-ScheduledTaskAction -Execute "powershell.exe" `
-            -Argument "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File `"$script`""
+$action   = New-ScheduledTaskAction -Execute "conhost.exe" `
+            -Argument "--headless powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File `"$script`""
 $trigger  = New-ScheduledTaskTrigger -Daily -At 07:30
 $settings = New-ScheduledTaskSettingsSet -StartWhenAvailable -RunOnlyIfNetworkAvailable `
             -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries `
@@ -109,6 +110,9 @@ $settings = New-ScheduledTaskSettingsSet -StartWhenAvailable -RunOnlyIfNetworkAv
 Register-ScheduledTask -TaskName "algotrade-data-update" -Action $action `
             -Trigger $trigger -Settings $settings
 ```
+
+`conhost.exe --headless` dipakai karena `-WindowStyle Hidden` tetap memunculkan jendela
+Windows Terminal, dan menutup jendela itu mematikan update.
 
 Cek, jalankan sekarang, lihat log, atau hapus:
 

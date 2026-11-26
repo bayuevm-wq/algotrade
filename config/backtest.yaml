@@ -1,0 +1,31 @@
+# ===== Konfigurasi `algotrade portfolio` (mesin multi-aset) =====
+capital_usd: 10000           # modal bersama; USDT dianggap = USD
+timeframe: 1d
+start: null                  # null = sejauh data semua aset memungkinkan
+end: null
+
+instruments:                 # weight = porsi modal untuk aset itu saat sinyalnya 1
+  - {market: cex, symbol: BTC/USDT, weight: 0.5}
+  - {market: us_equity, symbol: SPY, weight: 0.5}
+
+strategy:
+  name: sma_cross
+  params: {fast: 20, slow: 100}
+allow_short: false           # hanya berlaku untuk perpetual
+
+stops:                       # null = tidak dipakai; persen dari harga masuk
+  stop_loss_pct: null
+  take_profit_pct: null
+
+perp:
+  leverage: 1
+  # Funding TIDAK PERNAH disambung antar sumber. Laporan dibagi dua periode:
+  # sebelum data OKX tersedia memakai arsip Binance (pengganti), sesudahnya memakai OKX.
+  stress_cost_multiplier: 2.0    # uji funding lebih mahal: yang dibayar dikali ini
+  stress_income_multiplier: 0.5  # ... dan yang diterima dikali ini
+
+dex:
+  liquidity_haircut: 0.5             # potret likuiditas terbaru x 50%
+  max_order_pct_of_liquidity: 0.5    # order maksimal 0,5% dari likuiditas (setelah haircut)
+  sensitivity_haircuts: [0.25, 0.5, 1.0]
+  liquidity_history_days: 90         # label "indikatif" sampai riwayat asli sepanjang ini

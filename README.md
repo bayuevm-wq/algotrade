@@ -31,11 +31,9 @@ Rencana lengkap ada di [`ROADMAP.md`](ROADMAP.md).
 
 **Yang bisa dipakai sekarang:**
 
-- Data crypto (OKX), saham US, dan DEX tersimpan di Parquet + DuckDB, dengan laporan kualitas.
-  Lihat [`docs/data.md`](docs/data.md), termasuk cara update otomatis harian di Windows.
-- Backtest satu aset dengan dua strategi (`sma_cross`, `rsi_meanrev`) dan satu model biaya
-  persentase. Bagian ini **masih** memakai data harian yfinance dan config bawaan saham IDX;
-  disambungkan ke data multi-pasar di Fase 2.
+- Data crypto (OKX), saham US, IDX, dan DEX di Parquet + DuckDB, dengan laporan kualitas.
+  Lihat [`docs/data.md`](docs/data.md), termasuk update otomatis harian di Windows.
+- Backtest, walk-forward, dan compare satu aset yang membaca data tersebut.
 
 ## 1. Persiapan (sekali saja)
 
@@ -66,18 +64,19 @@ uv run pre-commit install
 
 ```bash
 uv run pytest -q                                          # semua tes harus lulus
-uv run python -m algotrade.cli backtest --synthetic       # tes offline
-uv run python -m algotrade.cli backtest                   # ticker di config
-uv run python -m algotrade.cli backtest --ticker BTC-USD
-uv run python -m algotrade.cli backtest --ticker SPY --strategy rsi_meanrev
-uv run python -m algotrade.cli walkforward                # hasil out-of-sample
-uv run python -m algotrade.cli compare                    # banyak ticker -> reports/compare.csv
-uv run python -m algotrade.cli compare --tickers BTC-USD SPY --strategy rsi_meanrev
+uv run algotrade backtest --synthetic                     # tanpa data
+uv run algotrade data update                              # unduh data dulu
+uv run algotrade backtest                                 # instrumen di config/default.yaml
+uv run algotrade backtest --symbol SPY --strategy rsi_meanrev
+uv run algotrade walkforward --symbol ETH/USDT            # hasil out-of-sample
+uv run algotrade compare                                  # -> reports/compare.csv
+uv run algotrade compare --market us_equity --symbols SPY AAPL
 ```
 
-Grafik tersimpan di `reports/`. Atur ticker, parameter, dan biaya di `config/default.yaml`.
-Biaya dan `periods_per_year` bawaan disetel untuk saham IDX, jadi sesuaikan dulu sebelum
-membaca hasil pasar lain.
+Grafik tersimpan di `reports/`. Instrumen dan parameter strategi diatur di
+`config/default.yaml`; **semua biaya** di `config/instruments.yaml`. Dataset berstatus GAGAL
+ditolak (`--allow-stale` hanya mengizinkan data yang basi). Perpetual hanya bisa diuji dengan
+`algotrade portfolio` karena funding harus dihitung.
 
 ### Data multi-pasar
 

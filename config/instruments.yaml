@@ -1,6 +1,10 @@
 # ===== Data multi-pasar (dipakai perintah `algotrade data ...`) =====
 # Exchange, daftar simbol, pool, dan timeframe diubah di sini, tidak di kode.
-# Semua angka biaya hanyalah CONTOH (belum dipakai backtest sampai Fase 2) - cek tarif asli.
+#
+# BIAYA: dipakai semua backtest. Satuan persen per sisi, gas dalam USD per swap.
+# Angka bertanda PERLU DICEK masih tebakan/contoh. Namanya juga ditulis di daftar
+# `unverified`, sehingga laporan backtest memperingatkannya. Setelah Anda cocokkan dengan
+# tarif asli, ubah angkanya lalu hapus namanya dari `unverified`.
 
 storage:
   root: data/market            # file Parquet
@@ -11,8 +15,18 @@ markets:
     session: 24/7              # buka terus
     periods_per_year: 365      # jumlah bar harian per tahun
     quote: USDT
-    costs: {maker_fee_pct: 0.08, taker_fee_pct: 0.10, slippage_pct: 0.05}
-    perp_costs: {maker_fee_pct: 0.02, taker_fee_pct: 0.05, slippage_pct: 0.05}
+    costs:                     # spot; order dianggap taker (market order)
+      taker_fee_pct: 0.15      # PERLU DICEK: halaman fee akun OKX Anda (angka bawaan ccxt)
+      maker_fee_pct: 0.10      # PERLU DICEK: halaman fee akun OKX Anda (belum dipakai)
+      slippage_pct: 0.05       # PERLU DICEK: asumsi, baru bisa diukur saat paper trading
+      unverified: [taker_fee_pct, maker_fee_pct, slippage_pct]
+    perp_costs:
+      taker_fee_pct: 0.05      # PERLU DICEK: halaman fee akun OKX Anda
+      maker_fee_pct: 0.02      # PERLU DICEK: halaman fee akun OKX Anda (belum dipakai)
+      slippage_pct: 0.05       # PERLU DICEK: asumsi
+      maintenance_margin_pct: 0.4   # tier 1 BTC & ETH dari API OKX, dicek 2026-11-26.
+                                    # Posisi besar memakai tier lebih tinggi (belum dimodelkan)
+      unverified: [taker_fee_pct, maker_fee_pct, slippage_pct]
     quality: {max_stale_hours: 6, outlier_return: 0.15, funding_extreme: 0.005}
   us_equity:
     session: XNYS              # kalender bursa NYSE
@@ -20,13 +34,20 @@ markets:
     quote: USD
     tick_size: 0.01
     lot_size: 1
-    costs: {commission_pct: 0.0, spread_pct: 0.02, slippage_pct: 0.02}
+    costs:
+      commission_pct: 0.0      # PERLU DICEK: broker Anda (termasuk biaya konversi rupiah)
+      spread_pct: 0.02         # PERLU DICEK: selisih bid-ask penuh; tiap sisi bayar separuh
+      slippage_pct: 0.02       # PERLU DICEK: asumsi
+      unverified: [commission_pct, spread_pct, slippage_pct]
     quality: {max_stale_sessions: 1, outlier_return: 0.20}
   dex:
     session: 24/7
     periods_per_year: 365
     quote: USD
-    costs: {slippage_pct: 0.10, mev_buffer_pct: 0.20}   # swap fee & gas diisi per pool
+    costs:                     # swap fee & gas diisi per pool di bagian `sources`
+      slippage_pct: 0.10       # PERLU DICEK: asumsi
+      mev_buffer_pct: 0.20     # PERLU DICEK: asumsi
+      unverified: [slippage_pct, mev_buffer_pct]
     quality: {max_stale_hours: 6, outlier_return: 0.15, min_liquidity_usd: 1000000}
   idx:
     session: XIDX              # kalender Bursa Efek Indonesia
@@ -34,7 +55,11 @@ markets:
     quote: IDR
     tick_size: null            # IDX: tergantung harga
     lot_size: 100
-    costs: {buy_fee_pct: 0.15, sell_fee_pct: 0.25, slippage_pct: 0.05}
+    costs:
+      buy_fee_pct: 0.15        # PERLU DICEK: broker Anda
+      sell_fee_pct: 0.25       # PERLU DICEK: broker Anda (termasuk pajak jual)
+      slippage_pct: 0.05       # PERLU DICEK: asumsi
+      unverified: [buy_fee_pct, sell_fee_pct, slippage_pct]
     quality: {max_stale_sessions: 1, outlier_return: 0.25}
 
 sources:
@@ -74,15 +99,27 @@ sources:
     derived: [4h, 1d]
     # Pilih pool berdasarkan likuiditas DAN volume; likuiditas besar bervolume kecil mencurigakan.
     pools:
-      - {name: WETH-USDC-eth, network: eth, fee_pct: 0.05, gas_usd: 5.0,
-         address: "0x88e6a0c2ddd26feeb64f039a2c41296fcb3f5640"}
-      - {name: SOL-USDC-solana, network: solana, fee_pct: null, gas_usd: 0.01,   # fee belum dicek
-         address: "Czfq3xZZDmsdGdUyrNLtRhGc47cXcZtLG4crryfu44zE"}
-      - {name: WETH-USDC-base, network: base, fee_pct: 0.3, gas_usd: 0.05,
-         address: "0x6c561b446416e1a00e8e93e221854d6ea4171372"}
+      - name: WETH-USDC-eth
+        network: eth
+        address: "0x88e6a0c2ddd26feeb64f039a2c41296fcb3f5640"
+        fee_pct: 0.05          # dari GeckoTerminal, dicek 2026-11-26
+        gas_usd: 1.0           # PERLU DICEK: Etherscan gas tracker (saat dicek +-$0,02; bisa melonjak)
+        unverified: [gas_usd]
+      - name: SOL-USDC-solana
+        network: solana
+        address: "Czfq3xZZDmsdGdUyrNLtRhGc47cXcZtLG4crryfu44zE"
+        fee_pct: 0.04          # dari API resmi Orca (feeRate 400), dicek 2026-11-26
+        gas_usd: 0.02          # PERLU DICEK: Solscan (biaya prioritas berubah-ubah)
+        unverified: [gas_usd]
+      - name: WETH-USDC-base
+        network: base
+        address: "0x6c561b446416e1a00e8e93e221854d6ea4171372"
+        fee_pct: 0.3           # dari GeckoTerminal, dicek 2026-11-26
+        gas_usd: 0.05          # PERLU DICEK: BaseScan (belum menghitung biaya data L1 secara pasti)
+        unverified: [gas_usd]
 
   idx:
-    enabled: false             # opsional; ubah ke true bila perlu
+    enabled: true              # opsional; ubah ke false bila tidak perlu
     provider: yfinance
     symbols: [BBCA.JK, BBRI.JK, TLKM.JK, ASII.JK, "^JKSE"]
     timeframes: [1d]

@@ -1,17 +1,18 @@
-# ===== Konfigurasi utama =====
-# Contoh ticker (sumber: Yahoo Finance):
-#   Saham IDX : BBCA.JK, BBRI.JK, TLKM.JK, ^JKSE (IHSG)
-#   Crypto    : BTC-USD, ETH-USD
-#   Forex     : EURUSD=X, USDIDR=X
-ticker: BBCA.JK
-# Daftar untuk perintah `compare` (dipakai bila --tickers tidak diisi)
-tickers: [BBCA.JK, BBRI.JK, TLKM.JK, ASII.JK, "^JKSE"]
-start: "2015-01-01"
-end: null            # null = sampai hari ini
-interval: 1d
+# ===== Konfigurasi `backtest`, `walkforward`, dan `compare` =====
+# Data diambil dari store (jalankan `algotrade data update` dulu). Daftar simbol dan SEMUA
+# biaya ada di config/instruments.yaml.
+instrument:
+  market: cex                # cex / us_equity / dex / idx
+  symbol: BTC/USDT
+  timeframe: 1d
+
+# Dipakai `compare` bila --symbols / --market tidak diisi
+compare:
+  market: cex
+  symbols: [BTC/USDT, ETH/USDT]
 
 strategy:
-  name: sma_cross    # pilihan: sma_cross, rsi_meanrev
+  name: sma_cross            # pilihan: sma_cross, rsi_meanrev
   params:
     fast: 20
     slow: 100
@@ -22,14 +23,8 @@ param_grid:
   slow: [100, 150, 200]
 
 backtest:
-  initial_capital: 100000000   # Rp 100 juta
-  allow_short: false           # saham IDX ritel umumnya tidak bisa short
-  # Biaya per sisi dalam persen. CONTOH saja — cek fee broker Anda!
-  # IDX ritel umumnya ~0.15% beli & ~0.25% jual (sudah termasuk pajak jual 0.1%).
-  buy_fee_pct: 0.15
-  sell_fee_pct: 0.25
-  slippage_pct: 0.05           # perkiraan selisih harga eksekusi
-  periods_per_year: 252        # 252 saham, 365 crypto, ~260 forex
+  initial_capital: 10000     # dalam mata uang quote (USD/USDT/IDR); memengaruhi biaya gas DEX
+  allow_short: false
 
 walkforward:
   train_years: 3

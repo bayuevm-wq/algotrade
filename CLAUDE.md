@@ -11,8 +11,7 @@ jelaskan perubahan dengan bahasa Indonesia yang sederhana.
   urutan kerja) dan **tunggu persetujuan**.
 - Satu fase selesai = kriteria "Selesai jika" terpenuhi + tes lulus + hasil dilaporkan +
   commit + push + checklist di `ROADMAP.md` diperbarui. Baru lanjut.
-- Status sekarang: Fase 0 dan 1 selesai. Backtest masih satu aset dan membaca cache CSV lama;
-  data multi-pasar baru dipakai mulai Fase 2.
+- Status sekarang: Fase 0 dan 1 selesai; Fase 2 dikerjakan.
 
 ## Repo ini PUBLIK
 Semua yang di-commit bisa dilihat siapa pun, selamanya.
@@ -36,24 +35,26 @@ Semua yang di-commit bisa dilihat siapa pun, selamanya.
 - Aktifkan hook (sekali per komputer): `uv run pre-commit install`
 - Periksa rahasia: `uv run python scripts/check_secrets.py --all` (atau `--history`)
 - Lint: `uv run ruff check . --fix`
-- Backtest: `uv run python -m algotrade.cli backtest [--ticker X] [--strategy Y]`
-- Walk-forward: `uv run python -m algotrade.cli walkforward`
-- Banding banyak ticker: `uv run python -m algotrade.cli compare [--tickers A B] [--strategy Y]`
+- Backtest: `uv run algotrade backtest [--symbol X] [--market M] [--strategy Y]`
+- Walk-forward: `uv run algotrade walkforward [--symbol X]`
+- Banding banyak simbol: `uv run algotrade compare [--market M] [--symbols A B]`
 - Offline: tambahkan `--synthetic`
 - Data multi-pasar: `uv run algotrade data update [--market M] [--full]`, `... data quality`
 
 ## Struktur
 - `src/algotrade/instruments.py` — model `Instrument` + pembaca `config/instruments.yaml`
 - `src/algotrade/data/`         — adapter (`cex`, `equity`, `dex`, `archive`), `store`
-  (Parquet + DuckDB), `resample`, `quality`, `update`; `yahoo.py` = cache CSV lama
+  (Parquet + DuckDB), `resample`, `quality`, `update`
 - `src/algotrade/data_cli.py`   — perintah `data update` / `data quality`
 - `src/algotrade/strategies/`   — satu file per strategi, daftar di `strategies/__init__.py`
 - `src/algotrade/backtest.py`   — backtester vektor (shift 1 bar + biaya)
 - `src/algotrade/compare.py`    — tabel strategi vs Buy & Hold untuk banyak ticker
 - `src/algotrade/walkforward.py`— optimasi parameter train/test bergulir
 - `src/algotrade/metrics.py`    — Sharpe, CAGR, drawdown, dll.
-- `config/default.yaml`         — ticker, parameter, biaya (backtest)
-- `config/instruments.yaml`     — pasar, exchange, simbol, timeframe (data)
+- `src/algotrade/engine/`       — pemuat data backtest, model biaya, likuiditas DEX
+- `config/default.yaml`         — instrumen & parameter backtest satu aset
+- `config/backtest.yaml`        — pengaturan portofolio & DEX
+- `config/instruments.yaml`     — pasar, exchange, simbol, timeframe, dan SEMUA biaya
 - `docs/data.md`                — sumber data, batasannya, dan penjadwalan
 
 ## Referensi (baca saja, jangan diubah, jangan menyalin kode mentah)

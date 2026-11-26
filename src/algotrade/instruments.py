@@ -73,9 +73,12 @@ def _build(market: str, src: dict, defaults: dict) -> list[Instrument]:
         "tick_size": defaults.get("tick_size"), "lot_size": defaults.get("lot_size"),
     }
     if market == "dex":
+        base = defaults["costs"]
         return [Instrument(symbol=p["name"], source=src["provider"], kind="pool",
-                           costs={**defaults["costs"], "swap_fee_pct": p.get("fee_pct"),
-                                  "gas_usd": p.get("gas_usd")},
+                           costs={**base, "swap_fee_pct": p.get("fee_pct"),
+                                  "gas_usd": p.get("gas_usd"),
+                                  "unverified": [*base.get("unverified", []),
+                                                 *p.get("unverified", [])]},
                            extra={"network": p["network"], "address": p["address"]}, **common)
                 for p in src["pools"]]
     out = []

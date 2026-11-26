@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pandas as pd
 import pytest
 
@@ -38,7 +40,7 @@ def test_save_csv_roundtrip(tmp_path):
 def test_cli_compare_offline(tmp_path, monkeypatch, capsys):
     out = tmp_path / "compare.csv"
     monkeypatch.setattr("sys.argv", ["algotrade", "compare", "--synthetic",
-                                     "--tickers", "AAA", "BBB", "--output", str(out)])
+                                     "--symbols", "AAA", "BBB", "--output", str(out)])
     cli.main()
     saved = pd.read_csv(out)
     assert saved["ticker"].unique().tolist() == ["SYNTHETIC-AAA", "SYNTHETIC-BBB"]
@@ -46,13 +48,13 @@ def test_cli_compare_offline(tmp_path, monkeypatch, capsys):
 
 
 def test_cli_compare_all_failed_writes_nothing(tmp_path, monkeypatch):
-    def fail(*args, **kwargs):
-        raise ValueError("tidak ada data")
-
     out = tmp_path / "compare.csv"
-    monkeypatch.setattr(cli, "load_prices", fail)
-    monkeypatch.setattr("sys.argv", ["algotrade", "compare", "--tickers", "AAA",
-                                     "--output", str(out)])
+    monkeypatch.setattr(cli, "ROOT", tmp_path)          # store kosong
+    config = Path(__file__).resolve().parents[1] / "config"
+    monkeypatch.setattr("sys.argv", [
+        "algotrade", "compare", "--symbols", "AAA", "--output", str(out),
+        "--config", str(config / "default.yaml"),
+        "--data-config", str(config / "instruments.yaml")])
     with pytest.raises(SystemExit):
         cli.main()
     assert not out.exists()

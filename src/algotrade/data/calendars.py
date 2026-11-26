@@ -14,12 +14,19 @@ def _calendar(code: str):
     return xc.get_calendar(code)
 
 
-def session_closes(code: str, start: pd.Timestamp, end: pd.Timestamp) -> pd.Series:
-    """Series: index = tanggal sesi (tanpa zona), nilai = jam tutup (UTC)."""
+def session_times(code: str, start: pd.Timestamp, end: pd.Timestamp) -> pd.DataFrame:
+    """index = tanggal sesi (tanpa zona), kolom open & close = jam buka/tutup (UTC)."""
     calendar = _calendar(code)
     first = max(start.tz_localize(None).normalize(), calendar.first_session)
     last = min(end.tz_localize(None).normalize(), calendar.last_session)
     if first > last:
-        return pd.Series(dtype="datetime64[ns, UTC]")
+        empty = pd.Series(dtype="datetime64[ns, UTC]")
+        return pd.DataFrame({"open": empty, "close": empty})
     sessions = calendar.sessions_in_range(first, last)
-    return calendar.closes.loc[sessions]
+    return pd.DataFrame({"open": calendar.opens.loc[sessions],
+                         "close": calendar.closes.loc[sessions]})
+
+
+def session_closes(code: str, start: pd.Timestamp, end: pd.Timestamp) -> pd.Series:
+    """Series: index = tanggal sesi (tanpa zona), nilai = jam tutup (UTC)."""
+    return session_times(code, start, end)["close"]

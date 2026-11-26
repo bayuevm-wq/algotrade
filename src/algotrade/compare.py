@@ -16,14 +16,15 @@ METRICS = ["total_return", "cagr", "volatility", "sharpe", "sortino", "max_drawd
 
 
 def compare_tickers(tickers: list[str], loader: Callable[[str], pd.DataFrame],
-                    strategy: Strategy, cfg: BacktestConfig
+                    strategy: Strategy,
+                    cfg: BacktestConfig | Callable[[str], BacktestConfig]
                     ) -> tuple[pd.DataFrame, dict[str, str]]:
     """Return (tabel dua baris per ticker, pesan error per ticker yang gagal)."""
     rows, errors = [], {}
     for ticker in tickers:
         try:
             df = loader(ticker)
-            res = run_backtest(df, strategy, cfg)
+            res = run_backtest(df, strategy, cfg(ticker) if callable(cfg) else cfg)
         except Exception as e:  # noqa: BLE001 - satu ticker gagal tidak boleh menghentikan yang lain
             errors[ticker] = str(e)
             continue
