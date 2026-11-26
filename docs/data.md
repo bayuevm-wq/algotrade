@@ -81,7 +81,7 @@ Selisih harga per jam pool ETH terhadap OKX: median 0,08%, persentil 99 sekitar 
 ## Keterbatasan
 
 - Daftar saham dipilih dari perusahaan besar hari ini (**survivorship bias**).
-- Angka biaya di config adalah contoh; swap fee pool Solana belum diisi. Fase 2 yang memakainya.
+- Biaya yang masih tebakan bertanda PERLU DICEK di config.
 - `backtest`, `walkforward`, dan `compare` membaca data Parquet ini; dataset GAGAL ditolak.
 - BBRI.JK dan TLKM.JK saat ini GAGAL: pada 20 Apr 2016 Yahoo memberi harga buka di luar
   rentang high-low.

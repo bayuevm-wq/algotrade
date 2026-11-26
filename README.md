@@ -22,7 +22,7 @@ Rencana lengkap ada di [`ROADMAP.md`](ROADMAP.md).
 |---|---|---|
 | 0 | Backtest satu aset, walk-forward, tes look-ahead, compare | ✅ selesai |
 | 1 | Arsitektur multi-pasar & data | ✅ selesai |
-| 2 | Backtest multi-aset dengan biaya per pasar | belum |
+| 2 | Backtest multi-aset dengan biaya per pasar | ✅ selesai |
 | 3 | Lab riset anti-overfitting | belum |
 | 4 | Strategi & portofolio | belum |
 | 5 | Dashboard | belum |
@@ -34,6 +34,10 @@ Rencana lengkap ada di [`ROADMAP.md`](ROADMAP.md).
 - Data crypto (OKX), saham US, IDX, dan DEX di Parquet + DuckDB, dengan laporan kualitas.
   Lihat [`docs/data.md`](docs/data.md), termasuk update otomatis harian di Windows.
 - Backtest, walk-forward, dan compare satu aset yang membaca data tersebut.
+- Backtest portofolio multi-aset (`algotrade portfolio`) dengan biaya per pasar, funding,
+  likuidasi, stop, dan laporan. Lihat [`docs/backtest.md`](docs/backtest.md).
+- **Angka biaya sebagian besar masih tebakan** (ditandai PERLU DICEK); cocokkan dulu sebelum
+  mempercayai hasil.
 
 ## 1. Persiapan (sekali saja)
 
@@ -71,6 +75,7 @@ uv run algotrade backtest --symbol SPY --strategy rsi_meanrev
 uv run algotrade walkforward --symbol ETH/USDT            # hasil out-of-sample
 uv run algotrade compare                                  # -> reports/compare.csv
 uv run algotrade compare --market us_equity --symbols SPY AAPL
+uv run algotrade portfolio                                # multi-aset, config/backtest.yaml
 ```
 
 Grafik tersimpan di `reports/`. Instrumen dan parameter strategi diatur di
@@ -132,12 +137,14 @@ sudah digantikan.
 ## Struktur
 
 ```
-config/default.yaml        konfigurasi backtest
-config/instruments.yaml    pasar, exchange, simbol, timeframe
+config/default.yaml        backtest satu aset
+config/backtest.yaml       portofolio & DEX
+config/instruments.yaml    pasar, exchange, simbol, timeframe, biaya
 src/algotrade/
   instruments.py           model Instrument
   data/                    adapter, penyimpanan, resampling, kualitas, update
   strategies/              strategi (tambah di sini)
+  engine/                  mesin portofolio, biaya, funding, likuiditas
   backtest.py              mesin backtest + biaya
   compare.py               banyak ticker vs Buy & Hold
   walkforward.py           optimasi out-of-sample
@@ -146,5 +153,7 @@ src/algotrade/
 scripts/check_secrets.py   pemeriksa rahasia (pre-commit)
 scripts/data_update.ps1    update data terjadwal (Windows)
 docs/data.md               panduan data
+docs/backtest.md           aturan & keterbatasan backtest
+docs/research_log.md       catatan strategi yang diuji
 tests/                     tes (termasuk deteksi look-ahead)
 ```

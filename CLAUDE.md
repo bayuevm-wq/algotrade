@@ -11,7 +11,7 @@ jelaskan perubahan dengan bahasa Indonesia yang sederhana.
   urutan kerja) dan **tunggu persetujuan**.
 - Satu fase selesai = kriteria "Selesai jika" terpenuhi + tes lulus + hasil dilaporkan +
   commit + push + checklist di `ROADMAP.md` diperbarui. Baru lanjut.
-- Status sekarang: Fase 0 dan 1 selesai; Fase 2 dikerjakan.
+- Status sekarang: Fase 0, 1, dan 2 selesai.
 
 ## Repo ini PUBLIK
 Semua yang di-commit bisa dilihat siapa pun, selamanya.
@@ -39,6 +39,7 @@ Semua yang di-commit bisa dilihat siapa pun, selamanya.
 - Walk-forward: `uv run algotrade walkforward [--symbol X]`
 - Banding banyak simbol: `uv run algotrade compare [--market M] [--symbols A B]`
 - Offline: tambahkan `--synthetic`
+- Portofolio: `uv run algotrade portfolio [--symbols A B] [--leverage N]`
 - Data multi-pasar: `uv run algotrade data update [--market M] [--full]`, `... data quality`
 
 ## Struktur
@@ -51,7 +52,9 @@ Semua yang di-commit bisa dilihat siapa pun, selamanya.
 - `src/algotrade/compare.py`    — tabel strategi vs Buy & Hold untuk banyak ticker
 - `src/algotrade/walkforward.py`— optimasi parameter train/test bergulir
 - `src/algotrade/metrics.py`    — Sharpe, CAGR, drawdown, dll.
-- `src/algotrade/engine/`       — pemuat data backtest, model biaya, likuiditas DEX
+- `src/algotrade/engine/`       — mesin portofolio, funding, pemuat data, biaya, likuiditas
+- `docs/backtest.md`            — aturan eksekusi, funding, DEX, dan keterbatasan
+- `docs/research_log.md`        — catat setiap strategi yang diuji, termasuk yang gagal
 - `config/default.yaml`         — instrumen & parameter backtest satu aset
 - `config/backtest.yaml`        — pengaturan portofolio & DEX
 - `config/instruments.yaml`     — pasar, exchange, simbol, timeframe, dan SEMUA biaya

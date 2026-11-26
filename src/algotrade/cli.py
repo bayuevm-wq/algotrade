@@ -26,6 +26,7 @@ from .engine.liquidity import INDICATIVE, load_liquidity
 from .engine.market_data import DataRejected, find_instrument, load_bars
 from .instruments import MARKETS, load_data_config
 from .metrics import format_metrics
+from .portfolio_cli import add_portfolio_parser
 from .report import plot_result
 from .strategies import get_strategy
 from .walkforward import expand_grid, walk_forward
@@ -218,6 +219,7 @@ def main():
     s.add_argument("--output", default=str(ROOT / "reports" / "compare.csv"))
     s.set_defaults(func=cmd_compare)
     add_data_parser(sub)
+    add_portfolio_parser(sub)
     args = p.parse_args()
     try:
         args.func(args)
