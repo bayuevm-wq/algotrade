@@ -13,3 +13,17 @@ data/*.duckdb
 data/*.duckdb.wal
 data/market/
 data/logs/
+
+# Rahasia: jangan pernah masuk repo publik
+.env.*
+*.env
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*wallet*.json
+*keystore*
+*keypair*.json
+id_rsa
+id_ed25519

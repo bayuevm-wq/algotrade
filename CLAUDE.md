@@ -14,9 +14,27 @@ jelaskan perubahan dengan bahasa Indonesia yang sederhana.
 - Status sekarang: Fase 0 dan 1 selesai. Backtest masih satu aset dan membaca cache CSV lama;
   data multi-pasar baru dipakai mulai Fase 2.
 
+## Repo ini PUBLIK
+Semua yang di-commit bisa dilihat siapa pun, selamanya.
+- **Jangan pernah commit:** file `.env`, API key/secret/passphrase, token, private key, seed
+  phrase, **alamat wallet pribadi**, atau **data akun** (saldo, posisi, riwayat order, ID akun,
+  email, tangkapan layar akun). Data pasar dan laporan juga tidak di-commit.
+- Alamat kontrak/pool **publik** di config boleh.
+- **Kunci hanya dibaca dari environment variable** (`os.environ`). Tidak dari kode, file config,
+  argumen perintah, atau log. Jangan mencetak nilainya.
+- Claude Code tidak membuka `.env` atau file kunci/wallet. `.env.example` hanya berisi nama
+  variabel tanpa nilai.
+- Pre-commit hook harus aktif (`uv run pre-commit install`). **Jangan memakai
+  `git commit --no-verify`.** Komentar `pragma: allowlist secret` hanya untuk salah deteksi
+  yang sudah diperiksa dan disetujui pemilik proyek.
+- Kalau rahasia terlanjur ter-commit atau ter-push: beri tahu pemilik proyek dan **ganti
+  kuncinya**. Menghapus dari riwayat saja tidak cukup.
+
 ## Perintah
 - Install: `uv sync --extra dev` (atau `pip install -e ".[dev]"`)
 - Tes: `uv run pytest -q`
+- Aktifkan hook (sekali per komputer): `uv run pre-commit install`
+- Periksa rahasia: `uv run python scripts/check_secrets.py --all` (atau `--history`)
 - Lint: `uv run ruff check . --fix`
 - Backtest: `uv run python -m algotrade.cli backtest [--ticker X] [--strategy Y]`
 - Walk-forward: `uv run python -m algotrade.cli walkforward`
@@ -65,7 +83,7 @@ jelaskan perubahan dengan bahasa Indonesia yang sederhana.
    out-of-sample setelah biaya; yang gagal dicatat di `docs/research_log.md`.
 6. **Parameter pasar di config** (fee, gas, funding, jam bursa), bukan di-hardcode.
 7. **Keamanan kunci:**
-   - Jangan pernah menaruh API key di kode; pakai `.env` (sudah di .gitignore).
+   - Ikuti bagian "Repo ini PUBLIK": kunci hanya dari environment variable.
    - API key CEX: tanpa izin withdraw, IP whitelist aktif.
    - Seed phrase / private key wallet **tidak pernah** ditulis di kode atau di chat, dan
      **tidak boleh dibaca Claude Code**. Jangan membuka file yang berisinya. Wallet DEX
@@ -80,4 +98,3 @@ jelaskan perubahan dengan bahasa Indonesia yang sederhana.
 - Python 3.10+, type hints, fungsi kecil, docstring singkat bahasa Indonesia.
 - pandas/numpy vektor bila memungkinkan; loop boleh untuk logika berstatus (mis. stop-loss).
 - Tambah tes di `tests/` untuk setiap logika baru. Tes tidak boleh butuh internet.
-- Repo ini publik: jangan commit data, laporan, atau informasi pribadi.

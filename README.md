@@ -7,7 +7,11 @@ sebagai adapter.
 Fokus utamanya: memodelkan **biaya nyata tiap pasar** dengan benar, karena backtest yang
 mengabaikan biaya (terutama di DEX) menipu.
 
-> ⚠️ Untuk belajar & riset. Hasil backtest bukan jaminan hasil nyata. Bukan nasihat keuangan.
+> ## ⚠️ Disclaimer
+> **Proyek ini untuk belajar dan riset. Bukan nasihat keuangan atau investasi**, dan bukan
+> ajakan membeli atau menjual aset apa pun. Hasil backtest tidak menjamin hasil di masa depan.
+> Trading crypto, saham, dan terutama DEX bisa menghabiskan seluruh modal. Semua keputusan dan
+> risikonya ada pada pengguna. Data pihak ketiga bisa salah atau tidak lengkap.
 > Belum ada fitur order live.
 
 ## Status
@@ -51,6 +55,12 @@ uv sync --extra dev
 ```
 
 Tanpa uv: `python -m venv .venv`, aktifkan, lalu `pip install -e ".[dev]"`.
+
+**Wajib bila Anda akan commit:** aktifkan pemeriksa rahasia (sekali per komputer).
+
+```bash
+uv run pre-commit install
+```
 
 ## 2. Coba jalankan
 
@@ -96,7 +106,16 @@ Yang dipercaya adalah angka **walk-forward out-of-sample**, bukan backtest biasa
 
 ## 4. Keamanan
 
-- API key exchange: tanpa izin withdraw, aktifkan IP whitelist, simpan di `.env`.
+Repo ini **publik**.
+
+- Kunci hanya dibaca dari **environment variable**. `.env` tidak pernah di-commit.
+- API key exchange: tanpa izin withdraw, aktifkan IP whitelist.
+- Jangan commit alamat wallet pribadi atau data akun.
+- Pre-commit hook menolak commit berisi API key, private key, seed phrase, atau file `.env`,
+  wallet, data, dan laporan. Periksa manual: `uv run python scripts/check_secrets.py --all`.
+- Hook bukan jaminan. Ia tidak mengenali alamat wallet pribadi atau data akun, bisa dilewati
+  dengan `--no-verify`, dan tidak aktif di clone yang belum menjalankan perintah pemasangan.
+  Kunci yang bocor harus **diganti**.
 - Wallet DEX: wallet khusus bot dengan dana kecil. Seed phrase dan private key tidak pernah
   ditulis di kode atau chat.
 - Tidak ada uang sungguhan sebelum paper trading/testnet berjalan minimal 3 bulan.
@@ -125,6 +144,7 @@ src/algotrade/
   walkforward.py           optimasi out-of-sample
   metrics.py, report.py    metrik & grafik
   cli.py, data_cli.py      perintah terminal
+scripts/check_secrets.py   pemeriksa rahasia (pre-commit)
 scripts/data_update.ps1    update data terjadwal (Windows)
 docs/data.md               panduan data
 tests/                     tes (termasuk deteksi look-ahead)

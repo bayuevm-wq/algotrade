@@ -1,0 +1,15 @@
+# Pengaman repo publik. Aktifkan sekali per komputer:
+#   uv sync --extra dev
+#   uv run pre-commit install
+repos:
+  - repo: local
+    hooks:
+      - id: check-secrets
+        name: seed phrase, private key, dan file terlarang
+        entry: uv run --no-sync python scripts/check_secrets.py
+        language: system
+      - id: detect-secrets
+        name: detect-secrets
+        entry: uv run --no-sync detect-secrets-hook
+        language: system
+        exclude: ^uv\.lock$
