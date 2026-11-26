@@ -1,0 +1,35 @@
+# ===== Konfigurasi utama =====
+# Contoh ticker (sumber: Yahoo Finance):
+#   Saham IDX : BBCA.JK, BBRI.JK, TLKM.JK, ^JKSE (IHSG)
+#   Crypto    : BTC-USD, ETH-USD
+#   Forex     : EURUSD=X, USDIDR=X
+ticker: BBCA.JK
+start: "2015-01-01"
+end: null            # null = sampai hari ini
+interval: 1d
+
+strategy:
+  name: sma_cross    # pilihan: sma_cross, rsi_meanrev
+  params:
+    fast: 20
+    slow: 100
+
+# Grid parameter untuk walk-forward (hanya dipakai perintah `walkforward`)
+param_grid:
+  fast: [10, 20, 50]
+  slow: [100, 150, 200]
+
+backtest:
+  initial_capital: 100000000   # Rp 100 juta
+  allow_short: false           # saham IDX ritel umumnya tidak bisa short
+  # Biaya per sisi dalam persen. CONTOH saja — cek fee broker Anda!
+  # IDX ritel umumnya ~0.15% beli & ~0.25% jual (sudah termasuk pajak jual 0.1%).
+  buy_fee_pct: 0.15
+  sell_fee_pct: 0.25
+  slippage_pct: 0.05           # perkiraan selisih harga eksekusi
+  periods_per_year: 252        # 252 saham, 365 crypto, ~260 forex
+
+walkforward:
+  train_years: 3
+  test_years: 1
+  optimize_metric: sharpe
