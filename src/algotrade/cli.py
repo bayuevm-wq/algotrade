@@ -46,10 +46,20 @@ def _prepare(args, cfg, symbol: str, market: str | None, timeframe: str,
     data = load_data_config(args.data_config, ROOT)
     store = Store(data.root, data.database)
     ins = find_instrument(data, symbol, market)
+    source_note = []
+    if args.source and args.source != ins.source:
+        backup = [i for i in data.fallbacks if i.symbol == symbol and i.source == args.source]
+        if not backup:
+            raise DataRejected(f"{symbol} tidak punya sumber '{args.source}' di config.")
+        ins = backup[0]
+        source_note = [(f"Data {symbol} dari sumber CADANGAN {args.source}; hasilnya tidak "
+                        "sama dengan data sumber utama.")]
     bars = load_bars(data, store, ins, timeframe, args.start, args.end, args.allow_stale)
     settings = cfg["backtest"]
     capital = float(settings["initial_capital"])
-    notes = [f"Peringatan data {symbol}: {', '.join(bars.warnings)}"] if bars.warnings else []
+    notes = source_note
+    if bars.warnings:
+        notes.append(f"Peringatan data {symbol}: {', '.join(bars.warnings)}")
     liquidity = limit = None
     if ins.market == "dex":
         dex = _read_config(args.portfolio_config)["dex"]
@@ -199,6 +209,7 @@ def _add_common(s):
     s.add_argument("--portfolio-config", default=str(ROOT / "config" / "backtest.yaml"))
     s.add_argument("--market", choices=MARKETS)
     s.add_argument("--timeframe")
+    s.add_argument("--source", help="sumber cadangan, mis. indodax (tidak pernah otomatis)")
     s.add_argument("--start", help="tanggal awal data, mis. 2022-01-01")
     s.add_argument("--end", help="tanggal akhir data")
     s.add_argument("--allow-stale", action="store_true", help="izinkan data yang basi")

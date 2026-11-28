@@ -24,6 +24,9 @@ uv run algotrade portfolio --symbols SOL-USDC-solana --timeframe 4h
 
 Hasil disimpan di `reports/portfolio_*` (log transaksi, equity, return bulanan, grafik).
 
+Opsi `--source indodax` pada mesin satu aset memakai data cadangan (lihat
+[`data.md`](data.md)). Hasilnya tidak setara dengan data OKX.
+
 ## Aturan mesin portofolio
 
 - Sinyal dari bar yang sudah tutup dieksekusi di harga buka bar berikutnya. Bar harian saham

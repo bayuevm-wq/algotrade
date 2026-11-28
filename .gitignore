@@ -13,6 +13,7 @@ reports/*.md
 data/*.duckdb
 data/*.duckdb.wal
 data/market/
+data/research/
 data/logs/
 
 # Rahasia: jangan pernah masuk repo publik

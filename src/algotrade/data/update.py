@@ -33,6 +33,12 @@ class Adapters:
         return CexAdapter(src["exchange"], src.get("page_limit", 300))
 
     @cached_property
+    def fallback(self) -> CexAdapter:
+        src = self.sources["cex"]["fallback"]
+        return CexAdapter(src["exchange"], src.get("page_limit", 300),
+                          end_param=src.get("end_param_seconds"))
+
+    @cached_property
     def equity(self) -> EquityAdapter:
         return EquityAdapter()
 
@@ -62,6 +68,7 @@ class Result:
     dataset: str
     added: int
     error: str = ""
+    unreachable: bool = False          # gagal karena sumbernya tidak bisa dihubungi
 
 
 def _archive_of(config: DataConfig, instrument: Instrument) -> tuple[Instrument, str, dict] | None:
@@ -149,19 +156,48 @@ def build_jobs(config: DataConfig, store: Store, adapters: Adapters, now: pd.Tim
     return jobs
 
 
+def _is_unreachable(error: Exception) -> bool:
+    import ccxt
+
+    return isinstance(error, (ccxt.NetworkError, ConnectionError, TimeoutError))
+
+
+def fallback_jobs(config: DataConfig, store: Store, adapters: Adapters, now: pd.Timestamp,
+                  results: list[Result], full: bool = False) -> list[Job]:
+    """Job cadangan untuk simbol yang OHLCV utamanya tidak bisa dihubungi.
+
+    Hasilnya disimpan di folder sumber cadangan; data utama tidak disentuh atau disambung.
+    """
+    down = {r.symbol for r in results
+            if r.unreachable and r.market == "cex" and r.dataset.startswith("ohlcv_")}
+    jobs = []
+    for ins in config.fallbacks:
+        if ins.symbol not in down:
+            continue
+        for tf in ins.timeframes:
+            jobs.append(Job(ins, f"ohlcv_{tf}", lambda i=ins, t=tf: _bars(
+                store, adapters.fallback, i, t, now, full)))
+        for tf in ins.derived:
+            jobs.append(Job(ins, f"ohlcv_{tf}", lambda i=ins, t=tf: _derive(store, i, t)))
+    return jobs
+
+
 def run_jobs(jobs: list[Job], log: Callable[[str], None] = print) -> list[Result]:
     """Satu kegagalan tidak menghentikan yang lain."""
     results = []
     for n, job in enumerate(jobs, 1):
         i = job.instrument
         label = f"[{n}/{len(jobs)}] {i.market}/{i.source} {i.symbol} {job.dataset}"
+        unreachable = False
         try:
             added, error = job.run(), ""
             log(f"{label}: +{added} baris")
         except Exception as e:  # noqa: BLE001 - dicatat, lalu lanjut ke job berikutnya
             added, error = 0, f"{type(e).__name__}: {e}"
+            unreachable = _is_unreachable(e)
             log(f"{label}: GAGAL {error}")
-        results.append(Result(i.market, i.source, i.symbol, job.dataset, added, error))
+        results.append(Result(i.market, i.source, i.symbol, job.dataset, added, error,
+                              unreachable))
     return results
 
 
@@ -175,7 +211,8 @@ def instrument_table(config: DataConfig) -> pd.DataFrame:
 
 
 def quality_report(config: DataConfig, store: Store, now: pd.Timestamp,
-                   market: str | None = None) -> pd.DataFrame:
+                   market: str | None = None,
+                   extra_jobs: list[Job] | None = None) -> pd.DataFrame:
     """Satu baris per dataset yang SEHARUSNYA ada menurut config."""
     rows = []
 
@@ -191,7 +228,8 @@ def quality_report(config: DataConfig, store: Store, now: pd.Timestamp,
                                 for i in issues),
         })
 
-    for job in build_jobs(config, store, Adapters(config), now, market):
+    jobs = build_jobs(config, store, Adapters(config), now, market) + (extra_jobs or [])
+    for job in jobs:
         ins, dataset = job.instrument, job.dataset
         rules = config.markets[ins.market]["quality"]
         df = store.read(ins, dataset)

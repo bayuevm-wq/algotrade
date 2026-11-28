@@ -11,8 +11,7 @@ jelaskan perubahan dengan bahasa Indonesia yang sederhana.
   urutan kerja) dan **tunggu persetujuan**.
 - Satu fase selesai = kriteria "Selesai jika" terpenuhi + tes lulus + hasil dilaporkan +
   commit + push + checklist di `ROADMAP.md` diperbarui. Baru lanjut.
-- Status sekarang: Fase 0, 1, dan 2 selesai. Fase 3 sebagian (pencatat, DSR, PBO); fitur,
-  label, dan purged CV belum.
+- Status sekarang: Fase 0, 1, 2, dan 3 selesai.
 
 ## Repo ini PUBLIK
 Semua yang di-commit bisa dilihat siapa pun, selamanya.
@@ -40,7 +39,8 @@ Semua yang di-commit bisa dilihat siapa pun, selamanya.
 - Walk-forward: `uv run algotrade walkforward [--symbol X]`
 - Banding banyak simbol: `uv run algotrade compare [--market M] [--symbols A B]`
 - Offline: tambahkan `--synthetic`
-- Riset: `uv run algotrade research validate [--case N]`, `... research trials`
+- Riset: `uv run algotrade research validate [--case N | --all]`, `... research dataset`,
+  `... research trials`
 - Portofolio: `uv run algotrade portfolio [--symbols A B] [--leverage N]`
 - Data multi-pasar: `uv run algotrade data update [--market M] [--full]`, `... data quality`
 
@@ -55,7 +55,8 @@ Semua yang di-commit bisa dilihat siapa pun, selamanya.
 - `src/algotrade/walkforward.py`— optimasi parameter train/test bergulir
 - `src/algotrade/metrics.py`    — Sharpe, CAGR, drawdown, dll.
 - `src/algotrade/engine/`       — mesin portofolio, funding, pemuat data, biaya, likuiditas
-- `src/algotrade/research/`     — pencatat percobaan (otomatis), DSR, PBO, validasi
+- `src/algotrade/research/`     — pencatat percobaan (otomatis), DSR, PBO, validasi, fitur,
+  label (target saja), purged walk-forward
 - `config/research.yaml`        — kasus uji & ambang (pra-registrasi); `docs/research.md`
 - `docs/backtest.md`            — aturan eksekusi, funding, DEX, dan keterbatasan
 - `docs/research_log.md`        — catat setiap strategi yang diuji, termasuk yang gagal
@@ -75,6 +76,8 @@ Semua yang di-commit bisa dilihat siapa pun, selamanya.
 ## Aturan riset
 - Ambang dan grid di-commit **sebelum** hasil dilihat; jangan diubah sesudahnya.
 - Jangan menghindari atau menghapus pencatat percobaan (`data/experiments.duckdb`).
+- Data sumber cadangan tidak pernah disambung dengan sumber utama dan tidak dipakai diam-diam.
+- Jangan mengakali pemblokiran jaringan atau mematikan pemeriksaan sertifikat.
 
 ## Aturan WAJIB (jangan dilanggar)
 1. **Tidak boleh look-ahead.** Sinyal di bar t hanya memakai data ≤ t. Dilarang `shift(-n)`,

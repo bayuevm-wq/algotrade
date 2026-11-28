@@ -156,6 +156,12 @@ def validate(config: DataConfig, store: Store, name: str, case: dict, rules: dic
         periods_per_year=bt.periods_per_year)
 
 
+def _params(row: dict) -> str:
+    """Parameter variasi apa pun, mis. 'fast=10, slow=100'."""
+    skip = {"sharpe_tahunan", "total_return", "skew", "kurtosis", "bar", "var_sharpe_tahunan"}
+    return ", ".join(f"{k}={value}" for k, value in row.items() if k not in skip)
+
+
 def report(v: Validation, rules: dict, recorded_variants: int) -> str:
     """Laporan teks (markdown)."""
     annual = np.sqrt(v.periods_per_year)
@@ -168,9 +174,8 @@ def report(v: Validation, rules: dict, recorded_variants: int) -> str:
         "| Kriteria (ditetapkan sebelum hasil) | Hasil | Lolos |", "|---|---|---|",
         *[f"| {n} | {value} | {'ya' if ok else 'TIDAK'} |" for n, value, ok in v.criteria],
         "", "## Deflated Sharpe Ratio",
-        (f"Variasi terbaik: fast/slow {v.best.get('fast')}/{v.best.get('slow')}, Sharpe "
-        f"{v.best['sharpe_tahunan']:.2f} per tahun, skew {v.best['skew']:.2f}, kurtosis "
-        f"{v.best['kurtosis']:.1f}."), "",
+        (f"Variasi terbaik: {_params(v.best)}; Sharpe {v.best['sharpe_tahunan']:.2f} per "
+         f"tahun, skew {v.best['skew']:.2f}, kurtosis {v.best['kurtosis']:.1f}."), "",
         "| Jumlah percobaan | DSR |", "|---|---|",
         *[f"| {n} | {value:.3f} |" for n, value in v.dsr.items()],
         "", "## PBO",
@@ -193,9 +198,9 @@ def report(v: Validation, rules: dict, recorded_variants: int) -> str:
         f"- Keyakinan Sharpe walk-forward di atas nol: {v.info['psr_wf_di_atas_nol']:.3f}.",
         (f"- Keyakinan strategi lebih baik daripada Buy & Hold (selisih return harian): "
         f"{v.info['psr_selisih_vs_bh']:.3f}."),
-        "", "## Semua variasi", "", "| fast | slow | Sharpe | Total return |", "|---|---|---|---|",
-        *[f"| {r.get('fast')} | {r.get('slow')} | {r['sharpe_tahunan']:.2f} | "
-          f"{r['total_return']:.1%} |" for r in v.variants.to_dict("records")],
+        "", "## Semua variasi", "", "| Parameter | Sharpe | Total return |", "|---|---|---|",
+        *[f"| {_params(r)} | {r['sharpe_tahunan']:.2f} | {r['total_return']:.1%} |"
+          for r in v.variants.to_dict("records")],
         "", "## Batasan", "",
         f"- Biaya belum diverifikasi: {', '.join(v.unverified) or 'tidak ada'}.",
         (f"- Variasi strategi ini yang tercatat di pencatat: {recorded_variants} (pencatatan "

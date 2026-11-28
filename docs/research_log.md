@@ -34,3 +34,16 @@ ditetapkan dan di-commit sebelum hasil dihitung; tidak diubah sesudahnya.
 - Biaya x2: DSR 0,897; Sharpe walk-forward 0,421 vs 0,355.
 - DSR bila sebaran antar percobaan selebar ketidakpastian data: 0,389.
 - Batasan: biaya belum diverifikasi; satu aset; percobaan sebelum 28 Nov 2026 tidak tercatat.
+
+## Hipotesis untuk Fase 4 (belum diuji)
+
+**`sma_cross` BTC gagal sebagai strategi alpha, tetapi berpotensi sebagai filter risiko.**
+
+- Gagal sebagai alpha: DSR 0,904 dan PBO 0,682; keyakinan lebih baik daripada Buy & Hold dari
+  selisih return harian hanya 0,428.
+- Dasar dugaan filter risiko: pada walk-forward 2022 - 2026, max drawdown -36% vs -67%.
+- Ini **belum bukti**. Dugaan muncul setelah melihat data yang sama, jadi sebelum diuji harus
+  dipra-registrasi: ukuran risiko yang dipakai (misalnya max drawdown dan Calmar), ambang
+  lolos, pembanding yang adil (misalnya porsi BTC tetap dengan volatilitas setara), parameter
+  yang tidak dipilih dari hasil terbaik, dan data di luar periode ini atau aset lain.
+- Pembanding porsi tetap penting: memegang lebih sedikit BTC juga mengecilkan drawdown.

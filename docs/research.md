@@ -10,6 +10,30 @@ uv run algotrade research fingerprint --case NAMA   # sidik jari data untuk kasu
 uv run algotrade research validate --case NAMA      # DSR, PBO, walk-forward
 ```
 
+## Tabel riset: fitur, label, purged CV
+
+```bash
+uv run algotrade research dataset --symbol BTC/USDT       # -> data/research/*.parquet
+uv run algotrade research validate --all                  # laporan semua kasus
+```
+
+**Fitur** (hanya data yang sudah diketahui saat bar tutup): momentum, volatilitas, skor volume,
+rata-rata funding (satu sumber saja, tidak disambung), korelasi bergulir dengan BTC dan SPY,
+likuiditas pool (kosong sebelum riwayatnya ada).
+
+**Label** (sengaja melihat ke depan, hanya untuk target):
+
+- *forward return*: dari buka bar berikutnya sampai tutup bar ke-N;
+- *triple-barrier*: +1 / -1 menurut batas yang tersentuh dulu (jarak = kelipatan volatilitas),
+  atau tanda return saat waktu habis. Dua batas di bar yang sama = batas bawah.
+
+**Purged walk-forward:** data latih selalu sebelum data uji; sampel latih yang labelnya baru
+diketahui setelah periode uji dimulai dibuang, ditambah jeda (*embargo*).
+
+Pengaturannya di bagian `dataset` pada `config/research.yaml`. Perintah ini **tidak** menilai
+daya prediksi fitur. Evaluasi fitur atau model nanti adalah percobaan baru: tetapkan dulu
+ambangnya, dan pastikan tercatat.
+
 ## Alur untuk kasus baru
 
 1. Tambahkan kasus di `config/research.yaml` (data, periode, grid parameter).

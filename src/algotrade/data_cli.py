@@ -7,10 +7,18 @@ from pathlib import Path
 import pandas as pd
 
 from .data.store import Store
-from .data.update import Adapters, build_jobs, instrument_table, quality_report, run_jobs
+from .data.update import (
+    Adapters,
+    build_jobs,
+    fallback_jobs,
+    instrument_table,
+    quality_report,
+    run_jobs,
+)
 from .instruments import MARKETS, load_data_config
 
 ROOT = Path(__file__).resolve().parents[2]
+EXIT_OK, EXIT_FAILED, EXIT_FALLBACK = 0, 1, 2
 
 
 def _setup(args):
@@ -44,15 +52,51 @@ def print_report(report: pd.DataFrame, path: Path) -> int:
     return int(counts.get("GAGAL", 0))
 
 
+def _only_stale(issues: str) -> bool:
+    failures = [part for part in issues.split("; ") if part.startswith("GAGAL")]
+    return bool(failures) and all("data basi" in part for part in failures)
+
+
+def exit_code(primary: str | None, results: list, backup: list, report: pd.DataFrame) -> int:
+    """0 = semua beres.
+    2 = exchange utama tidak bisa diakses, cadangan berhasil, dan TIDAK ada masalah lain.
+    1 = selain itu.
+    """
+    failed = [r for r in [*results, *backup] if r.error]
+    errors = report[report["status"] == "GAGAL"]
+    if not failed and not backup and errors.empty:
+        return EXIT_OK
+
+    def blocked(r) -> bool:
+        return r.unreachable and r.source == primary
+
+    backup_ok = bool(backup) and not any(r.error for r in backup)
+    # Dataset utama yang basi memang wajar saat exchange utama tidak bisa diakses
+    unexpected = [r for r in errors.itertuples()
+                  if not (r.source == primary and _only_stale(r.issues))]
+    if backup_ok and failed and all(blocked(r) for r in failed) and not unexpected:
+        return EXIT_FALLBACK
+    return EXIT_FAILED
+
+
 def cmd_update(args):
     config, store = _setup(args)
     now = pd.Timestamp.now(tz="UTC")
     adapters = Adapters(config)
-    jobs = build_jobs(config, store, adapters, now, args.market, args.full)
-    results = run_jobs(jobs, log=lambda m: print(m, flush=True))
+
+    def log(message):
+        print(message, flush=True)
+
+    results = run_jobs(build_jobs(config, store, adapters, now, args.market, args.full), log=log)
+    extra = fallback_jobs(config, store, adapters, now, results, args.full)
+    if extra:
+        print(f"\nExchange utama tidak bisa diakses. Memakai CADANGAN "
+              f"{extra[0].instrument.source} (disimpan terpisah, tidak disambung).", flush=True)
+    backup = run_jobs(extra, log=log)
     instruments = instrument_table(config)
     # Tick & lot crypto diambil dari exchange; bila gagal, biarkan kosong
-    for ins in (i for i in config.instruments if i.market == "cex"):
+    unreachable = any(r.unreachable and r.market == "cex" for r in results)
+    for ins in (i for i in config.instruments if i.market == "cex" and not unreachable):
         try:
             limits = adapters.cex.limits(ins)
         except Exception as e:  # noqa: BLE001 - metadata tambahan, bukan data utama
@@ -61,13 +105,25 @@ def cmd_update(args):
         row = (instruments["market"] == "cex") & (instruments["symbol"] == ins.symbol)
         for column in ["tick_size", "lot_size", "contract_size"]:
             instruments.loc[row, column] = limits[column]
-    store.refresh_database(instruments)
-    failed = [r for r in results if r.error]
-    errors = print_report(quality_report(config, store, pd.Timestamp.now(tz="UTC"), args.market),
-                          Path(args.report))
-    if failed or errors:
-        raise SystemExit(f"Selesai dengan masalah: {len(failed)} unduhan gagal, "
-                         f"{errors} dataset berstatus GAGAL.")
+    # Saat exchange utama tidak bisa diakses, tabel instrumen lama (lot dari exchange) dipertahankan
+    store.refresh_database(None if unreachable else instruments)
+    report = quality_report(config, store, pd.Timestamp.now(tz="UTC"), args.market, extra)
+    errors = print_report(report, Path(args.report))
+    primary = config.sources.get("cex", {}).get("exchange")
+    code = exit_code(primary, results, backup, report) if not report.empty else EXIT_FAILED
+    if code == EXIT_FALLBACK:
+        missing = sorted({f"{r.symbol} {r.dataset}" for r in results
+                          if r.error and (":" in r.symbol or r.dataset == "funding")})
+        print("Selesai dengan CADANGAN (kode 2): exchange utama tidak bisa diakses.")
+        if missing:
+            print("Tidak tercakup cadangan (menyusul saat utama bisa diakses): "
+                  + ", ".join(missing))
+        raise SystemExit(EXIT_FALLBACK)
+    if code:
+        failed = sum(bool(r.error) for r in [*results, *backup])
+        print(f"Selesai dengan masalah: {failed} unduhan gagal, {errors} dataset berstatus "
+              "GAGAL.")
+        raise SystemExit(EXIT_FAILED)
     print("Update selesai tanpa kegagalan.")
 
 
@@ -75,7 +131,7 @@ def cmd_quality(args):
     config, store = _setup(args)
     report = quality_report(config, store, pd.Timestamp.now(tz="UTC"), args.market)
     if print_report(report, Path(args.report)):
-        raise SystemExit(1)
+        raise SystemExit(EXIT_FAILED)
 
 
 def add_data_parser(sub) -> None:

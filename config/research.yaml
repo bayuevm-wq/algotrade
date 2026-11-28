@@ -26,3 +26,22 @@ cases:
       slow: [100, 150, 200]
     walkforward: {train_years: 3, test_years: 1, metric: sharpe}
     initial_capital: 10000
+
+# ===== Tabel riset (`algotrade research dataset`): fitur, label, purged walk-forward =====
+dataset:
+  features:
+    momentum_windows: [5, 20, 60]
+    volatility_windows: [20, 60]
+    volume_window: 20
+    funding_days: 7
+    funding_source: arsip          # SATU sumber: arsip (Binance) atau asli (OKX)
+    correlation_window: 60
+    correlate_with: {btc: BTC/USDT, spy: SPY}
+  labels:
+    horizon: 10                    # jumlah bar ke depan
+    barrier_up: 2.0                # batas = angka ini x volatilitas harian
+    barrier_down: 2.0
+    vol_window: 20
+  cv:
+    n_splits: 5
+    embargo_days: 2

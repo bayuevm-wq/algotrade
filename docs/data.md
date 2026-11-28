@@ -33,6 +33,38 @@ halaman blokir; gejalanya `NetworkError` karena sertifikat tidak cocok. Jangan m
 pemeriksaan sertifikat. Data lama tidak rusak; update berikutnya dari jaringan yang bisa
 mengakses OKX akan menyusul yang terlewat (funding OKX hanya tersedia sekitar 3 bulan).
 
+## Exchange cadangan
+
+Bila OHLCV OKX **tidak bisa dihubungi** (gangguan jaringan atau diblokir), `data update`
+otomatis mengambil data spot dari **Indodax** (`sources.cex.fallback` di config).
+
+- Disimpan di `data/market/cex/indodax/...`. **Tidak pernah disambung** dengan data OKX, dan
+  data OKX tidak diubah.
+- Hanya BTC/USDT dan ETH/USDT spot sejak 2021. Perpetual dan funding OKX **tidak tercakup**;
+  keduanya menyusul saat OKX bisa diakses (funding OKX hanya tersedia sekitar 3 bulan).
+- Backtest tidak pernah beralih sendiri. Pakai `--source indodax` bila memang diinginkan.
+  `walkforward` dan `compare` juga menerima opsi itu; `portfolio` belum.
+- `data quality` hanya memeriksa sumber utama; cadangan diperiksa saat dipakai oleh update.
+
+**Mutunya jauh di bawah OKX.** Perbandingan harga tutup pada 28 Nov 2026 (2021 - sekarang):
+
+| Pasangan | Selisih median / persentil 99 / maks | Bar bervolume nol |
+|---|---|---|
+| BTC/USDT 1h | 0,32% / 1,97% / 6,8% | 21% |
+| ETH/USDT 1h | 0,46% / 3,78% / 43,3% | 36% |
+| BTC/USDT 1d | 0,35% / 2,05% / 5,5% | 0,1% |
+| ETH/USDT 1d | 0,49% / 3,88% / 11,3% | 0,2% |
+
+Pakai data harian saja untuk riset, dan jangan menganggap hasilnya setara dengan OKX.
+
+**Kode keluar `data update`:**
+
+| Kode | Arti |
+|---|---|
+| 0 | semua beres |
+| 2 | OKX tidak bisa diakses, cadangan berhasil, tidak ada masalah lain |
+| 1 | selain itu (unduhan gagal, data GAGAL, atau cadangan juga gagal) |
+
 ## Penyimpanan
 
 ```

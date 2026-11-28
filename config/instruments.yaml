@@ -86,6 +86,18 @@ sources:
     timeframes: [1h]           # diunduh dari exchange
     derived: [4h, 1d]          # dibuat dari timeframe pertama
     start: "2019-01-01"
+    fallback:                  # dipakai OTOMATIS hanya bila exchange utama tidak bisa diakses
+      enabled: true
+      exchange: indodax        # disimpan di folder sumbernya sendiri, TIDAK disambung ke OKX
+      page_limit: 500
+      end_param_seconds: to    # Indodax butuh batas akhir (detik) agar mau mengirim riwayat
+      symbols: [BTC/USDT, ETH/USDT]     # hanya spot; perpetual & funding tidak tercakup
+      start: "2021-01-01"      # riwayat sebelumnya tidak tersedia
+      costs:
+        taker_fee_pct: 0.30    # PERLU DICEK: halaman biaya Indodax
+        maker_fee_pct: 0.20    # PERLU DICEK: halaman biaya Indodax (belum dipakai)
+        slippage_pct: 0.50     # PERLU DICEK: pasangan USDT sepi, slippage bisa besar
+        unverified: [taker_fee_pct, maker_fee_pct, slippage_pct]
     funding:
       enabled: true            # funding dari exchange di atas (OKX: hanya +-3 bulan)
       archive:                 # riwayat panjang dari arsip publik Binance, disimpan terpisah

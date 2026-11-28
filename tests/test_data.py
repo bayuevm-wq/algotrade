@@ -67,6 +67,9 @@ def test_exchange_symbols_timeframes_come_from_config(tmp_path):
     text = text.replace("exchange: okx", "exchange: kraken").replace(
         'symbols: [BTC/USDT, ETH/USDT, "BTC/USDT:USDT", "ETH/USDT:USDT"]', "symbols: [SOL/USD]")
     text = text.replace("timeframes: [1h]           #", "timeframes: [15m]          #")
+    # cadangan merujuk simbol utama, jadi dimatikan saat daftar simbol diganti
+    text = text.replace("      enabled: true\n      exchange: indodax",
+                        "      enabled: false\n      exchange: indodax")
     path = tmp_path / "c.yaml"
     path.write_text(text, encoding="utf-8")
     ins = [i for i in load_data_config(path, tmp_path).instruments if i.market == "cex"]

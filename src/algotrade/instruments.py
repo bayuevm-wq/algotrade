@@ -61,6 +61,7 @@ class DataConfig:
     markets: dict
     sources: dict
     instruments: list[Instrument]
+    fallbacks: list[Instrument] = field(default_factory=list)   # sumber cadangan
 
 
 def _utc(value: str | None) -> pd.Timestamp | None:
@@ -120,6 +121,23 @@ def _apply_exceptions(instruments: list[Instrument], entries: list[dict],
             if (i.market, i.symbol) in found else i for i in instruments]
 
 
+def _fallbacks(sources: dict, instruments: list[Instrument]) -> list[Instrument]:
+    """Instrumen cadangan: salinan instrumen spot utama dengan sumber & biaya sendiri."""
+    cex = sources.get("cex") or {}
+    backup = cex.get("fallback") or {}
+    if not (cex.get("enabled", True) and backup.get("enabled")):
+        return []
+    if backup["exchange"] == cex["exchange"]:
+        raise ValueError("Exchange cadangan harus berbeda dari exchange utama.")
+    spot = {i.symbol: i for i in instruments if i.market == "cex" and i.kind == "spot"}
+    unknown = [s for s in backup["symbols"] if s not in spot]
+    if unknown:
+        raise ValueError(f"Simbol cadangan harus ada di daftar spot utama: {unknown}")
+    return [replace(spot[s], source=backup["exchange"], start=_utc(backup.get("start")),
+                    costs=dict(backup["costs"]), extra={})
+            for s in backup["symbols"]]
+
+
 def load_data_config(path: str | Path, base_dir: str | Path) -> DataConfig:
     """Baca config/instruments.yaml. Path penyimpanan relatif terhadap folder proyek."""
     with open(path, encoding="utf-8") as f:
@@ -140,4 +158,5 @@ def load_data_config(path: str | Path, base_dir: str | Path) -> DataConfig:
         raise ValueError("Ada simbol ganda di config instrumen.")
     base = Path(base_dir)
     return DataConfig(base / cfg["storage"]["root"], base / cfg["storage"]["database"],
-                      cfg["markets"], cfg["sources"], instruments)
+                      cfg["markets"], cfg["sources"], instruments,
+                      _fallbacks(cfg["sources"], instruments))

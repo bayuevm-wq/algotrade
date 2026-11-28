@@ -23,7 +23,7 @@ Rencana lengkap ada di [`ROADMAP.md`](ROADMAP.md).
 | 0 | Backtest satu aset, walk-forward, tes look-ahead, compare | ✅ selesai |
 | 1 | Arsitektur multi-pasar & data | ✅ selesai |
 | 2 | Backtest multi-aset dengan biaya per pasar | ✅ selesai |
-| 3 | Lab riset anti-overfitting | sebagian: pencatat percobaan, DSR, PBO |
+| 3 | Lab riset anti-overfitting | ✅ selesai |
 | 4 | Strategi & portofolio | belum |
 | 5 | Dashboard | belum |
 | 6 | Paper trading / testnet (minimal 3 bulan) | belum |
@@ -78,6 +78,7 @@ uv run algotrade compare --market us_equity --symbols SPY AAPL
 uv run algotrade portfolio                                # multi-aset, config/backtest.yaml
 uv run algotrade research validate                        # DSR, PBO (docs/research.md)
 uv run algotrade research trials                          # jumlah percobaan tercatat
+uv run algotrade research dataset --symbol BTC/USDT       # fitur, label, purged CV
 ```
 
 Grafik tersimpan di `reports/`. Instrumen dan parameter strategi diatur di
@@ -148,7 +149,7 @@ src/algotrade/
   data/                    adapter, penyimpanan, resampling, kualitas, update
   strategies/              strategi (tambah di sini)
   engine/                  mesin portofolio, biaya, funding, likuiditas
-  research/                pencatat percobaan, DSR, PBO
+  research/                pencatat, DSR, PBO, fitur, label, purged CV
   backtest.py              mesin backtest + biaya
   compare.py               banyak ticker vs Buy & Hold
   walkforward.py           optimasi out-of-sample

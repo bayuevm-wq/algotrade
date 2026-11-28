@@ -153,7 +153,7 @@ Gunakan ..\referensi sebagai acuan metodologi, jangan menyalin kode mentah.
 - [x] Fase 0 — Template awal (backtest satu ticker, walk-forward, tes look-ahead, compare)
 - [x] Fase 1 — Arsitektur multi-pasar & data
 - [x] Fase 2 — Backtest multi-aset realistis
-- [ ] Fase 3 — Lab riset anti-overfitting
+- [x] Fase 3 — Lab riset anti-overfitting
 - [ ] Fase 4 — Strategi & portofolio
 - [ ] Fase 5 — Dashboard
 - [ ] Fase 6 — Paper trading / testnet (3 bulan)
