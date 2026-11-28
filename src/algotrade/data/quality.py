@@ -74,6 +74,20 @@ def _gaps_and_stale(df: pd.DataFrame, instrument: Instrument, timeframe: str,
     return out
 
 
+def _row_errors(check: str, mask: pd.Series, df: pd.DataFrame, instrument: Instrument,
+                timeframe: str) -> list[Issue]:
+    """Error per bar, kecuali bar harian yang terdaftar sebagai pengecualian di config."""
+    ts, out = df["ts"], []
+    if timeframe_delta(timeframe) == pd.Timedelta(days=1):
+        for name, date, reason in instrument.extra.get("quality_exceptions", ()):
+            hit = mask & (ts == date) & (name == check)
+            if hit.any():
+                note = f"{date:%Y-%m-%d} {reason}".replace(";", ",")
+                out.append(Issue(WARN, f"dikecualikan: {check}", int(hit.sum()), note))
+                mask = mask & ~hit
+    return _issue(ERROR, check, mask, ts) + out
+
+
 def check_ohlcv(df: pd.DataFrame | None, instrument: Instrument, timeframe: str,
                 now: pd.Timestamp, rules: dict, expect_start: bool = True) -> list[Issue]:
     if df is None or df.empty:
@@ -86,7 +100,7 @@ def check_ohlcv(df: pd.DataFrame | None, instrument: Instrument, timeframe: str,
     bad = ((df["high"] < body.max(axis=1) * (1 - TOLERANCE))
            | (df["low"] > body.min(axis=1) * (1 + TOLERANCE))
            | (df["high"] < df["low"]))
-    out += _issue(ERROR, "high/low tidak masuk akal", bad, ts)
+    out += _row_errors("high/low tidak masuk akal", bad, df, instrument, timeframe)
     out += _issue(ERROR, "volume negatif", df["volume"] < 0, ts)
     out += _issue(ERROR, "bar belum selesai",
                   (ts + timeframe_delta(timeframe) > now) & (instrument.session == "24/7"), ts)

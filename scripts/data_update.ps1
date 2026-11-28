@@ -1,4 +1,5 @@
-# Jalankan `algotrade data update` dan simpan log ke data\logs. Dipakai oleh Task Scheduler.
+# Jalankan `algotrade data update` dan simpan log ke data\logs. Dipakai oleh Task Scheduler
+# lewat run_hidden.pyw. Argumen tambahan diteruskan, mis. --market idx.
 $ErrorActionPreference = "Continue"
 $root = Split-Path -Parent $PSScriptRoot
 Set-Location -LiteralPath $root
@@ -15,8 +16,9 @@ if (-not (Test-Path -LiteralPath $uv)) {
 }
 
 $env:PYTHONUTF8 = "1"
-"=== mulai {0:yyyy-MM-dd HH:mm:ss}" -f (Get-Date) | Out-File -FilePath $log -Append -Encoding utf8
-& $uv run algotrade data update 2>&1 |
+"=== mulai {0:yyyy-MM-dd HH:mm:ss} {1}" -f (Get-Date), ($args -join " ") |
+    Out-File -FilePath $log -Append -Encoding utf8
+& $uv run algotrade data update @args 2>&1 |
     ForEach-Object { "$_" } |
     Out-File -FilePath $log -Append -Encoding utf8
 $code = $LASTEXITCODE

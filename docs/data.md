@@ -28,6 +28,11 @@ Funding OKX dan Binance **tidak sama**. Pada periode tumpang tindih saat pemerik
 (199 titik), korelasinya hanya 0,59 (BTC) dan 0,68 (ETH). Keduanya disimpan terpisah; jangan
 disambung tanpa alasan.
 
+**Akses dari jaringan tertentu.** Sebagian operator memblokir `www.okx.com` dan mengalihkannya ke
+halaman blokir; gejalanya `NetworkError` karena sertifikat tidak cocok. Jangan mematikan
+pemeriksaan sertifikat. Data lama tidak rusak; update berikutnya dari jaringan yang bisa
+mengakses OKX akan menyusul yang terlewat (funding OKX hanya tersedia sekitar 3 bulan).
+
 ## Penyimpanan
 
 ```
@@ -62,7 +67,9 @@ print(con.sql("SELECT symbol, count(*), max(ts) FROM ohlcv GROUP BY symbol").df(
 - **PERINGATAN:** celah waktu, lonjakan ekstrem, volume nol, riwayat mulai terlambat,
   likuiditas rendah. Data tidak pernah diubah atau dihapus otomatis.
 
-Batasnya per pasar di bagian `quality` pada config. Kalender intraday saham belum diperiksa.
+Batasnya per pasar di bagian `quality` pada config. Bar rusak yang sudah diperiksa bisa
+didaftarkan di `quality_exceptions` (simbol, tanggal, jenis cek, alasan). Hanya cek high/low
+yang boleh dikecualikan. Kalender intraday saham belum diperiksa.
 
 ## Peringatan pada pemeriksaan pertama (26 Nov 2026)
 
@@ -83,13 +90,15 @@ Selisih harga per jam pool ETH terhadap OKX: median 0,08%, persentil 99 sekitar 
 - Daftar saham dipilih dari perusahaan besar hari ini (**survivorship bias**).
 - Biaya yang masih tebakan bertanda PERLU DICEK di config.
 - `backtest`, `walkforward`, dan `compare` membaca data Parquet ini; dataset GAGAL ditolak.
-- BBRI.JK dan TLKM.JK saat ini GAGAL: pada 20 Apr 2016 Yahoo memberi harga buka di luar
-  rentang high-low.
+- BBRI.JK dan TLKM.JK: pada 20 Apr 2016 Yahoo memberi harga buka di luar rentang high-low.
+  Terdaftar di `quality_exceptions` sehingga menjadi PERINGATAN.
 
 ## Update otomatis harian (Windows Task Scheduler)
 
-Skrip: [`scripts/data_update.ps1`](../scripts/data_update.ps1). Jalankan perintah di bawah ini
-sendiri di PowerShell, **dari folder proyek**.
+Skrip: [`scripts/data_update.ps1`](../scripts/data_update.ps1), diluncurkan oleh
+[`scripts/run_hidden.pyw`](../scripts/run_hidden.pyw) agar tidak membuka jendela **dan** kode
+errornya sampai ke Task Scheduler. Jalankan perintah di bawah ini sendiri di PowerShell,
+**dari folder proyek**, setelah `uv sync --extra dev`.
 
 Uji dulu secara manual:
 
@@ -100,9 +109,10 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\data_update.ps1
 Pasang tugas harian pukul 07:30 (waktu komputer):
 
 ```powershell
-$script   = (Resolve-Path .\scripts\data_update.ps1).Path
-$action   = New-ScheduledTaskAction -Execute "conhost.exe" `
-            -Argument "--headless powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File `"$script`""
+$python   = (Resolve-Path .\.venv\Scripts\pythonw.exe).Path
+$launcher = (Resolve-Path .\scripts\run_hidden.pyw).Path
+$action   = New-ScheduledTaskAction -Execute $python -Argument "`"$launcher`"" `
+            -WorkingDirectory (Get-Location).Path
 $trigger  = New-ScheduledTaskTrigger -Daily -At 07:30
 $settings = New-ScheduledTaskSettingsSet -StartWhenAvailable -RunOnlyIfNetworkAvailable `
             -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries `
@@ -111,8 +121,8 @@ Register-ScheduledTask -TaskName "algotrade-data-update" -Action $action `
             -Trigger $trigger -Settings $settings
 ```
 
-`conhost.exe --headless` dipakai karena `-WindowStyle Hidden` tetap memunculkan jendela
-Windows Terminal, dan menutup jendela itu mematikan update.
+Jangan memakai `conhost.exe --headless` (kode error hilang, tugas selalu terlihat sukses) atau
+`-WindowStyle Hidden` (jendela tetap muncul).
 
 Cek, jalankan sekarang, lihat log, atau hapus:
 

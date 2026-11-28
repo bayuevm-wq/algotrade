@@ -380,3 +380,43 @@ def test_cli_quality_fails_on_empty_store(tmp_path, monkeypatch, capsys):
         cli.main()
     assert "GAGAL" in capsys.readouterr().out
     assert (tmp_path / "q.csv").exists()
+
+
+# ---------- pengecualian kualitas ----------
+
+def _bad_daily(date):
+    days = pd.date_range(end=utc(date) + pd.Timedelta(days=1), periods=3)
+    df = ohlcv_frame([[int(d.timestamp() * 1000), 10, 11, 9, 10, 5] for d in days])
+    df.loc[df["ts"] == utc(date), "open"] = 8.0              # di bawah low
+    return df
+
+
+def _levels(config, symbol, date):
+    issues = check_ohlcv(_bad_daily(date), pick(config, symbol), "1d",
+                         utc(date) + pd.Timedelta(days=2), rules(config, "idx"),
+                         expect_start=False)
+    return {(i.level, i.check) for i in issues if "high/low" in i.check}
+
+
+def test_exception_downgrades_only_listed_symbol_and_date(config):
+    excused = {("PERINGATAN", "dikecualikan: high/low tidak masuk akal")}
+    failed = {("GAGAL", "high/low tidak masuk akal")}
+    assert _levels(config, "BBRI.JK", "2016-04-20") == excused
+    assert _levels(config, "TLKM.JK", "2016-04-20") == excused
+    assert _levels(config, "BBRI.JK", "2016-04-21") == failed      # tanggal lain
+    assert _levels(config, "BBCA.JK", "2016-04-20") == failed      # simbol lain
+
+
+@pytest.mark.parametrize(("old", "new"), [
+    ("check: high/low tidak masuk akal", "check: data basi"),
+    ("symbol: BBRI.JK\n    date", "symbol: SALAH.JK\n    date"),
+    ('reason: "Yahoo: harga buka 3650 di atas high 3635 (mentah), diperiksa 2026-11-26"',
+     'reason: ""'),
+])
+def test_bad_exception_entry_rejected(tmp_path, old, new):
+    text = CONFIG.read_text(encoding="utf-8")
+    assert old in text
+    path = tmp_path / "c.yaml"
+    path.write_text(text.replace(old, new, 1), encoding="utf-8")
+    with pytest.raises(ValueError):
+        load_data_config(path, tmp_path)

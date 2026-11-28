@@ -10,6 +10,21 @@ storage:
   root: data/market            # file Parquet
   database: data/market.duckdb # view DuckDB di atas file Parquet
 
+# Pengecualian kualitas: bar rusak yang SUDAH DIPERIKSA. Statusnya turun dari GAGAL menjadi
+# PERINGATAN. Berlaku hanya untuk simbol, tanggal (bar harian), dan jenis cek yang ditulis.
+# Data tidak diubah, jadi backtest tetap memakai harga aslinya.
+quality_exceptions:
+  - market: idx
+    symbol: BBRI.JK
+    date: "2016-04-20"
+    check: high/low tidak masuk akal
+    reason: "Yahoo: harga buka 1845,42 di bawah low 1849,97 (mentah), diperiksa 2026-11-26"
+  - market: idx
+    symbol: TLKM.JK
+    date: "2016-04-20"
+    check: high/low tidak masuk akal
+    reason: "Yahoo: harga buka 3650 di atas high 3635 (mentah), diperiksa 2026-11-26"
+
 markets:
   cex:
     session: 24/7              # buka terus

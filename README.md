@@ -152,6 +152,7 @@ src/algotrade/
   cli.py, data_cli.py      perintah terminal
 scripts/check_secrets.py   pemeriksa rahasia (pre-commit)
 scripts/data_update.ps1    update data terjadwal (Windows)
+scripts/run_hidden.pyw     peluncur tanpa jendela untuk Task Scheduler
 docs/data.md               panduan data
 docs/backtest.md           aturan & keterbatasan backtest
 docs/research_log.md       catatan strategi yang diuji

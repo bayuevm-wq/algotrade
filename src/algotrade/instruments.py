@@ -3,13 +3,15 @@
 from __future__ import annotations
 
 import re
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from pathlib import Path
 
 import pandas as pd
 import yaml
 
 MARKETS = ("cex", "us_equity", "dex", "idx")
+# Hanya cek per bar tertentu yang boleh dikecualikan (bukan data basi, ganda, dan sejenisnya)
+EXCUSABLE_CHECKS = ("high/low tidak masuk akal",)
 _UNITS = {"m": "min", "h": "h", "d": "D"}
 
 
@@ -95,6 +97,29 @@ def _build(market: str, src: dict, defaults: dict) -> list[Instrument]:
     return out
 
 
+def _apply_exceptions(instruments: list[Instrument], entries: list[dict],
+                      sources: dict) -> list[Instrument]:
+    """Tempelkan pengecualian kualitas ke instrumennya. Salah tulis = error."""
+    found: dict[tuple[str, str], list[tuple]] = {}
+    known = {(i.market, i.symbol) for i in instruments}
+    for entry in entries:
+        missing = {"market", "symbol", "date", "check", "reason"} - set(entry)
+        if missing or not str(entry.get("reason", "")).strip():
+            raise ValueError(f"Pengecualian kualitas kurang isian: {missing or 'reason'}.")
+        if entry["check"] not in EXCUSABLE_CHECKS:
+            raise ValueError(f"Cek '{entry['check']}' tidak boleh dikecualikan. "
+                             f"Pilihan: {EXCUSABLE_CHECKS}")
+        key = (entry["market"], entry["symbol"])
+        if not sources.get(entry["market"], {}).get("enabled", True):
+            continue                                 # pasarnya sedang dimatikan
+        if key not in known:
+            raise ValueError(f"Pengecualian untuk instrumen yang tidak ada: {key}.")
+        found.setdefault(key, []).append(
+            (entry["check"], _utc(str(entry["date"])), str(entry["reason"])))
+    return [replace(i, extra={**i.extra, "quality_exceptions": tuple(found[i.market, i.symbol])})
+            if (i.market, i.symbol) in found else i for i in instruments]
+
+
 def load_data_config(path: str | Path, base_dir: str | Path) -> DataConfig:
     """Baca config/instruments.yaml. Path penyimpanan relatif terhadap folder proyek."""
     with open(path, encoding="utf-8") as f:
@@ -108,6 +133,8 @@ def load_data_config(path: str | Path, base_dir: str | Path) -> DataConfig:
         for tf in [*src["timeframes"], *src.get("derived", [])]:
             timeframe_delta(tf)                     # gagal lebih awal bila salah tulis
         instruments += _build(market, src, cfg["markets"][market])
+    instruments = _apply_exceptions(instruments, cfg.get("quality_exceptions") or [],
+                                    cfg["sources"])
     keys = [(i.market, i.source, i.key) for i in instruments]
     if len(keys) != len(set(keys)):
         raise ValueError("Ada simbol ganda di config instrumen.")
