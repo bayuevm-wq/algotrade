@@ -2,12 +2,13 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field, replace
+from dataclasses import asdict, dataclass, field, replace
 
 import pandas as pd
 
 from ..data.store import Store
 from ..instruments import DataConfig
+from ..research import journal
 from ..strategies import get_strategy
 from . import funding as fund
 from .costs import cost_model
@@ -26,6 +27,7 @@ class Prepared:
     start: pd.Timestamp
     end: pd.Timestamp
     notes: list[str] = field(default_factory=list)
+    identity: dict = field(default_factory=dict)     # untuk pencatat percobaan
 
 
 @dataclass
@@ -116,7 +118,13 @@ def prepare(config: DataConfig, store: Store, cfg: dict, allow_stale: bool = Fal
         max_order_pct=float(dex["max_order_pct_of_liquidity"]) / 100)
     if settings.leverage < 1:
         raise DataRejected("Leverage minimal 1.")
-    return Prepared(assets, benchmarks, settings, start, end, notes)
+    identity = {"strategy": strategy.name, "params": strategy.params,
+                "timeframe": cfg["timeframe"],
+                "universe": {a.instrument.symbol: a.weight for a in assets},
+                "allow_short": bool(cfg.get("allow_short", False))
+                and any(a.instrument.kind == "perp" for a in assets),
+                "journal": str(config.database.parent / journal.FILENAME)}
+    return Prepared(assets, benchmarks, settings, start, end, notes, identity)
 
 
 def plan(config: DataConfig, store: Store, p: Prepared):
@@ -151,8 +159,28 @@ def _benchmark(config, store, p: Prepared, period: fund.Period) -> Result:
     return run_portfolio(assets, settings, period.start, period.end)
 
 
+def _log(p: Prepared, period: fund.Period, settings: Settings, **outcome) -> None:
+    """Catat run strategi (benchmark bukan percobaan)."""
+    i = p.identity
+    window = p.assets[0].bars
+    window = window[(window.index >= period.start) & (window.index <= period.end)]
+    journal.record(
+        i["journal"], engine="portofolio", strategy=i["strategy"], params=i["params"],
+        universe=i["universe"], timeframe=i["timeframe"],
+        modifiers={"allow_short": i["allow_short"], "leverage": settings.leverage,
+                   "stop_loss": settings.stop_loss, "take_profit": settings.take_profit},
+        data=window if len(window) else p.assets[0].bars,
+        costs={**asdict(settings), "funding_source": period.source}, **outcome)
+
+
 def run_period(config, store, p: Prepared, period: fund.Period,
                settings: Settings | None = None) -> Run:
     assets = _with_funding(config, store, p.assets, period)
-    strategy = run_portfolio(assets, settings or p.settings, period.start, period.end)
+    used = settings or p.settings
+    try:
+        strategy = run_portfolio(assets, used, period.start, period.end)
+    except Exception as e:
+        _log(p, period, used, error=f"{type(e).__name__}: {e}")
+        raise
+    _log(p, period, used, metrics=strategy.metrics)
     return Run(period, strategy, _benchmark(config, store, p, period))

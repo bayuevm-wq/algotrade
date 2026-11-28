@@ -118,7 +118,8 @@ def test_env_never_tracked_now_or_in_history():
 
 @needs_git
 @pytest.mark.parametrize("path", [".env", ".env.local", ".env.production", "config/prod.env",
-                                  "wallet.json", "bot.pem", "data/market.duckdb"])
+                                  "wallet.json", "bot.pem", "data/market.duckdb",
+                                  ".claude/settings.local.json", "data/experiments.duckdb"])
 def test_sensitive_files_are_ignored_by_git(path):
     assert git("check-ignore", "--no-index", "-q", path).returncode == 0
 

@@ -10,6 +10,7 @@ from ..data import quality
 from ..data.calendars import session_times
 from ..data.store import Store
 from ..instruments import DataConfig, Instrument, timeframe_delta
+from ..research import journal
 
 PRICES = ["open", "high", "low", "close", "volume"]
 
@@ -85,7 +86,12 @@ def load_bars(config: DataConfig, store: Store, instrument: Instrument, timefram
         out = out[out.index <= pd.Timestamp(end, tz="UTC")]
     if out.empty:
         raise DataRejected(f"{instrument.symbol}: tidak ada data pada rentang yang diminta.")
-    return Bars(instrument, timeframe, add_bar_times(out, instrument, timeframe), warnings)
+    out = add_bar_times(out, instrument, timeframe)
+    # Identitas ini membuat setiap backtest atas data asli tercatat otomatis
+    out.attrs["dataset"] = {
+        "market": instrument.market, "symbol": instrument.symbol, "timeframe": timeframe,
+        "journal": str(config.database.parent / journal.FILENAME)}
+    return Bars(instrument, timeframe, out, warnings)
 
 
 def lot_units(store: Store, instrument: Instrument) -> float | None:

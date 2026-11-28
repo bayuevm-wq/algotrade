@@ -28,6 +28,7 @@ from .instruments import MARKETS, load_data_config
 from .metrics import format_metrics
 from .portfolio_cli import add_portfolio_parser
 from .report import plot_result
+from .research_cli import add_research_parser
 from .strategies import get_strategy
 from .walkforward import expand_grid, walk_forward
 
@@ -220,6 +221,7 @@ def main():
     s.set_defaults(func=cmd_compare)
     add_data_parser(sub)
     add_portfolio_parser(sub)
+    add_research_parser(sub)
     args = p.parse_args()
     try:
         args.func(args)

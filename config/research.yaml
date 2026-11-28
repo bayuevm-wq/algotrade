@@ -1,0 +1,28 @@
+# ===== Uji overfitting (`algotrade research validate`) =====
+# PRA-REGISTRASI: ambang dan kasus di bawah ditetapkan serta di-commit SEBELUM hasilnya
+# dihitung (disetujui 28 Nov 2026). Jangan diubah setelah melihat hasil. Bila perlu uji baru,
+# tambahkan kasus baru dengan nama baru.
+validation:
+  dsr_threshold: 0.95          # lolos bila DSR >= angka ini ...
+  dsr_trials_required: 50      # ... dihitung dengan 50 percobaan
+  dsr_trials_report: [9, 50, 100]
+  pbo_threshold: 0.20          # lolos bila PBO <= angka ini
+  pbo_blocks: 16               # 12.870 pembagian
+  cost_stress_multiplier: 2.0  # uji tambahan dengan biaya dikali dua (informasi)
+# Kriteria ketiga: Sharpe walk-forward harus di atas Buy & Hold setelah biaya.
+
+cases:
+  sma_cross_btc:               # kandidat di docs/research_log.md
+    market: cex
+    symbol: BTC/USDT
+    timeframe: 1d
+    start: "2019-01-01"
+    end: "2026-11-27"
+    # hash data harga publik, bukan rahasia
+    data_fingerprint: "a7abf599868ae1cc"  # pragma: allowlist secret
+    strategy: sma_cross
+    param_grid:
+      fast: [10, 20, 50]
+      slow: [100, 150, 200]
+    walkforward: {train_years: 3, test_years: 1, metric: sharpe}
+    initial_capital: 10000

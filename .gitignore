@@ -6,6 +6,7 @@ data/*.csv
 data/*.parquet
 reports/*.png
 reports/*.csv
+reports/*.md
 .pytest_cache/
 .ruff_cache/
 *.egg-info/
@@ -27,3 +28,6 @@ data/logs/
 *keypair*.json
 id_rsa
 id_ed25519
+
+# Pengaturan Claude Code milik komputer ini (berisi path lokal)
+.claude/settings.local.json

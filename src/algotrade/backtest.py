@@ -12,11 +12,12 @@ Model eksekusi:
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
 
 import pandas as pd
 
 from .metrics import compute_metrics
+from .research import journal
 from .strategies.base import Strategy
 
 
@@ -54,6 +55,28 @@ def apply_costs(position: pd.Series, asset_ret: pd.Series,
 
 
 def run_backtest(df: pd.DataFrame, strategy: Strategy, cfg: BacktestConfig) -> BacktestResult:
+    """Backtest satu aset. Data asli dari store otomatis dicatat sebagai percobaan."""
+    dataset = df.attrs.get("dataset")
+    if not dataset:                                 # data palsu atau buatan tes
+        return _run_backtest(df, strategy, cfg)
+
+    def log(**outcome):
+        journal.record(
+            dataset["journal"], engine="vektor", strategy=strategy.name,
+            params=strategy.params, universe={dataset["symbol"]: 1.0},
+            timeframe=dataset["timeframe"], modifiers={"allow_short": cfg.allow_short},
+            data=df, costs=asdict(cfg), **outcome)
+
+    try:
+        result = _run_backtest(df, strategy, cfg)
+    except Exception as e:
+        log(error=f"{type(e).__name__}: {e}")
+        raise
+    log(metrics=result.metrics)
+    return result
+
+
+def _run_backtest(df: pd.DataFrame, strategy: Strategy, cfg: BacktestConfig) -> BacktestResult:
     first = strategy.warmup + 1                     # bar pertama yang bisa memegang posisi
     if len(df) <= first:
         raise ValueError(f"Data terlalu pendek: {len(df)} bar, butuh lebih dari {first}.")

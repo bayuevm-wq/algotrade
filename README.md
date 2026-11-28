@@ -23,7 +23,7 @@ Rencana lengkap ada di [`ROADMAP.md`](ROADMAP.md).
 | 0 | Backtest satu aset, walk-forward, tes look-ahead, compare | ✅ selesai |
 | 1 | Arsitektur multi-pasar & data | ✅ selesai |
 | 2 | Backtest multi-aset dengan biaya per pasar | ✅ selesai |
-| 3 | Lab riset anti-overfitting | belum |
+| 3 | Lab riset anti-overfitting | sebagian: pencatat percobaan, DSR, PBO |
 | 4 | Strategi & portofolio | belum |
 | 5 | Dashboard | belum |
 | 6 | Paper trading / testnet (minimal 3 bulan) | belum |
@@ -76,6 +76,8 @@ uv run algotrade walkforward --symbol ETH/USDT            # hasil out-of-sample
 uv run algotrade compare                                  # -> reports/compare.csv
 uv run algotrade compare --market us_equity --symbols SPY AAPL
 uv run algotrade portfolio                                # multi-aset, config/backtest.yaml
+uv run algotrade research validate                        # DSR, PBO (docs/research.md)
+uv run algotrade research trials                          # jumlah percobaan tercatat
 ```
 
 Grafik tersimpan di `reports/`. Instrumen dan parameter strategi diatur di
@@ -139,12 +141,14 @@ sudah digantikan.
 ```
 config/default.yaml        backtest satu aset
 config/backtest.yaml       portofolio & DEX
+config/research.yaml       kasus & ambang uji overfitting
 config/instruments.yaml    pasar, exchange, simbol, timeframe, biaya
 src/algotrade/
   instruments.py           model Instrument
   data/                    adapter, penyimpanan, resampling, kualitas, update
   strategies/              strategi (tambah di sini)
   engine/                  mesin portofolio, biaya, funding, likuiditas
+  research/                pencatat percobaan, DSR, PBO
   backtest.py              mesin backtest + biaya
   compare.py               banyak ticker vs Buy & Hold
   walkforward.py           optimasi out-of-sample
@@ -155,6 +159,7 @@ scripts/data_update.ps1    update data terjadwal (Windows)
 scripts/run_hidden.pyw     peluncur tanpa jendela untuk Task Scheduler
 docs/data.md               panduan data
 docs/backtest.md           aturan & keterbatasan backtest
+docs/research.md           cara uji overfitting
 docs/research_log.md       catatan strategi yang diuji
 tests/                     tes (termasuk deteksi look-ahead)
 ```
